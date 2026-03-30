@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detailed Implementation Plan · D365FO AI Framework — Avanade</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --accent: #FF5800;
+    --accent-glow: rgba(255,88,0,0.08);
+    --accent-border: rgba(255,88,0,0.3);
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #f59e0b;
+    --text-primary: #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    --border: rgba(0,0,0,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0;
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(255,88,0,0.025) 40px, rgba(255,88,0,0.025) 41px),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,88,0,0.025) 40px, rgba(255,88,0,0.025) 41px);
+  }
+
+  /* ── NAV ── */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.93); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  nav .inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  nav .logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+  nav .logo .logo-text { font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); letter-spacing: 0.02em; }
+  nav .links { display: flex; gap: 1.2rem; align-items: center; }
+  nav .links a { color: var(--text-secondary); text-decoration: none; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; transition: color 0.2s; }
+  nav .links a:hover { color: var(--accent); }
+  nav .links a.back-link { background: var(--accent-glow); border: 1px solid var(--accent-border); padding: 0.35rem 0.9rem; border-radius: 100px; color: var(--accent); font-weight: 600; text-transform: none; }
+  nav .links a.back-link:hover { background: var(--accent); color: #fff; }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown > a::after { content: ' ▾'; font-size: 0.6em; vertical-align: middle; }
+  .nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0; min-width: 220px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 200; }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a { display: flex !important; align-items: center; gap: 0.6rem; padding: 0.55rem 1.2rem !important; font-size: 0.78rem !important; text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap; color: var(--text-secondary) !important; }
+  .nav-dropdown-menu a:hover { background: var(--accent-glow); color: var(--accent) !important; }
+  .nav-dropdown-menu .dd-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── LAYOUT ── */
+  .page-wrap { max-width: 1000px; margin: 0 auto; padding: 90px 2rem 4rem; position: relative; z-index: 1; }
+
+  /* ── DOC HERO ── */
+  .doc-hero { padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); margin-bottom: 3rem; }
+  .doc-hero .badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.9rem; border-radius: 100px; background: var(--accent-glow); border: 1px solid var(--accent-border); font-size: 0.72rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.2rem; }
+  .doc-hero h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1rem; }
+  .doc-hero h1 .gr { background: linear-gradient(135deg, #FF5800 0%, #FF8C42 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .doc-hero p { font-size: 1rem; color: var(--text-secondary); max-width: 720px; line-height: 1.75; }
+  .doc-meta { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1.75rem; }
+  .doc-meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--text-secondary); }
+  .doc-meta-item strong { color: var(--text-primary); }
+  .doc-meta-item .di { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ── TOC ── */
+  .toc { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 3rem; }
+  .toc h3 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.4rem 2rem; }
+  .toc a { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-size: 0.82rem; color: var(--text-secondary); padding: 0.3rem 0; transition: color 0.2s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a .toc-dot { width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; }
+
+  /* ── SECTIONS ── */
+  .doc-section { margin-bottom: 4rem; }
+  .doc-section.alt-bg { background: var(--bg-secondary); border-radius: 16px; padding: 2.5rem; margin-left: -1rem; margin-right: -1rem; }
+
+  /* ── STEP HEADERS ── */
+  .step-header { display: flex; align-items: center; gap: 1rem; padding: 1.5rem 2rem; border-radius: 12px; margin-bottom: 2rem; }
+  .step-header.s1 { background: rgba(255,88,0,0.05); border: 1px solid rgba(255,88,0,0.2); }
+  .step-header.s2 { background: rgba(0,120,212,0.05); border: 1px solid rgba(0,120,212,0.2); }
+  .step-header.s3 { background: rgba(16,124,16,0.05); border: 1px solid rgba(16,124,16,0.2); }
+  .step-header.s4 { background: rgba(92,45,145,0.05); border: 1px solid rgba(92,45,145,0.2); }
+  .step-badge { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 900; color: #fff; flex-shrink: 0; }
+  .s1 .step-badge { background: #FF5800; }
+  .s2 .step-badge { background: #0078D4; }
+  .s3 .step-badge { background: #107C10; }
+  .s4 .step-badge { background: #5C2D91; }
+  .step-header-text h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  .step-header-text .sh-sub { font-size: 0.83rem; color: var(--text-secondary); margin-top: 0.25rem; }
+  .status-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.65rem; border-radius: 100px; font-size: 0.68rem; font-weight: 700; margin-left: auto; flex-shrink: 0; }
+  .status-pill.implemented { background: rgba(22,163,74,0.1); color: var(--green); }
+  .status-pill.planned { background: rgba(245,158,11,0.1); color: var(--amber); }
+
+  /* ── TYPOGRAPHY ── */
+  h2.section-h { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin: 2.5rem 0 1rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+  h3.sub-h { font-size: 1.05rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  p.prose { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.75; margin-bottom: 1rem; }
+  .note { background: rgba(16,124,16,0.05); border-left: 3px solid var(--green); padding: 0.9rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.25rem 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+  .blockquote { background: rgba(255,88,0,0.04); border-left: 3px solid var(--accent); padding: 1rem 1.25rem; border-radius: 0 8px 8px 0; margin: 1.25rem 0; font-size: 0.855rem; color: var(--text-secondary); font-style: italic; line-height: 1.65; }
+  .blockquote strong { color: var(--text-primary); font-style: normal; }
+
+  /* ── WORKFLOW LIST ── */
+  ol.workflow { list-style: none; counter-reset: wf; margin: 1rem 0; }
+  ol.workflow li { counter-increment: wf; display: flex; gap: 1rem; padding: 0.9rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+  ol.workflow li:last-child { border-bottom: none; }
+  ol.workflow li::before { content: counter(wf); min-width: 26px; height: 26px; border-radius: 50%; background: var(--accent-glow); border: 1px solid var(--accent-border); color: var(--accent); font-weight: 800; font-size: 0.72rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.05rem; }
+  ol.workflow li strong { color: var(--text-primary); }
+
+  /* ── UL ── */
+  ul.doc-list { list-style: none; margin: 0.75rem 0; }
+  ul.doc-list li { padding: 0.25rem 0 0.25rem 1.2rem; position: relative; font-size: 0.87rem; color: var(--text-secondary); line-height: 1.6; }
+  ul.doc-list li::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  ul.doc-list li strong { color: var(--text-primary); }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 10px; border: 1px solid var(--border); }
+  table.doc-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.82rem; }
+  table.doc-table th { padding: 0.7rem 1rem; background: var(--bg-secondary); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.doc-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; line-height: 1.5; }
+  table.doc-table tr:last-child td { border-bottom: none; }
+  table.doc-table tr:hover td { background: rgba(255,88,0,0.015); }
+  table.doc-table code { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; background: rgba(255,88,0,0.07); padding: 0.1rem 0.35rem; border-radius: 3px; color: #C74500; }
+  table.doc-table strong { color: var(--text-primary); }
+  table.doc-table .ok { color: var(--green); font-weight: 600; }
+  table.doc-table .no { color: var(--red); font-weight: 600; }
+  table.doc-table .part { color: var(--amber); font-weight: 600; }
+
+  /* ── CODE BLOCK ── */
+  .code-block { background: #1E1E2E; border-radius: 10px; padding: 1.5rem; margin: 1.25rem 0; overflow-x: auto; border: 1px solid rgba(255,88,0,0.15); }
+  .code-block pre { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7; color: #CDD6F4; white-space: pre; }
+  .code-block .cm { color: #6C7086; }
+  .code-block .kw { color: #CBA6F7; }
+  .code-block .str { color: #A6E3A1; }
+  .code-block .key { color: #89DCEB; }
+  .code-block .val { color: #FAB387; }
+
+  /* ── DECISIONS GRID ── */
+  .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .decision-card { padding: 1.2rem; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
+  .decision-card h5 { font-size: 0.78rem; font-weight: 700; color: var(--accent); margin-bottom: 0.4rem; }
+  .decision-card p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+  .decision-card code { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; background: var(--accent-glow); padding: 0.1rem 0.35rem; border-radius: 3px; color: #C74500; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav { display: flex; justify-content: space-between; align-items: center; padding: 2rem 0; border-top: 1px solid var(--border); margin-top: 1rem; }
+  .bottom-nav a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .bottom-nav a.prev { border: 1px solid var(--border); color: var(--text-secondary); }
+  .bottom-nav a.prev:hover { border-color: var(--accent-border); color: var(--accent); }
+  .bottom-nav a.next { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+  .bottom-nav a.next:hover { opacity: 0.9; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; position: relative; z-index: 1; background: linear-gradient(155deg, #F5F5F5 0%, #F5F5F5 50%, rgba(255,88,0,0.04) 50%); }
+  footer strong { color: var(--text-secondary); }
+
+  /* ── ANIMATIONS ── */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media(max-width:768px) { .doc-section.alt-bg { margin-left:0; margin-right:0; } nav .links a:not(.back-link) { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="inner">
+    <a href="presentation.html" class="logo">
+      <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:75px;">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M64.1487 27.819C63.7394 27.9328 63.2731 27.9891 62.7503 27.9891C61.4313 27.9891 60.7718 27.5126 60.7718 26.5595C60.7718 25.5613 61.4993 25.0618 62.955 25.0618C63.5459 25.0618 63.944 25.096 64.1487 25.1641V27.819ZM62.3078 19.6499C61.7392 19.6499 61.1875 19.7009 60.6535 19.803C60.1191 19.9052 59.6925 20.0472 59.3742 20.2285L59.545 21.8282C60.0225 21.6922 60.4487 21.5959 60.824 21.539C61.1993 21.4827 61.5799 21.4538 61.9668 21.4538C63.4219 21.4538 64.1498 22.0102 64.1498 23.1216V23.4961C63.8088 23.428 63.3312 23.3941 62.7174 23.3941C61.4434 23.3941 60.4371 23.6781 59.6984 24.2451C58.9592 24.8125 58.5898 25.5954 58.5898 26.5934C58.5898 28.6357 59.9885 29.6569 62.7854 29.6569C63.9222 29.6569 65.1052 29.4867 66.3329 29.1462V23.2918C66.3329 20.8642 64.9908 19.6499 62.3078 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M74.777 23.8028C74.777 22.9408 74.6117 22.3449 74.2823 22.0158C73.9524 21.6873 73.3667 21.5224 72.5257 21.5224C72.3209 21.5224 72.0764 21.5451 71.7922 21.5903C71.5076 21.6362 71.2407 21.6925 70.9905 21.7604V29.4189H68.7734V20.365C69.3414 20.1385 69.9897 19.9625 70.7177 19.8374C71.4452 19.713 72.1504 19.6504 72.8327 19.6504C75.6068 19.6504 76.994 20.8984 76.994 23.3943V29.4189H74.777V23.8028Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M84.2928 27.819C83.8835 27.9328 83.4171 27.9891 82.8943 27.9891C81.5751 27.9891 80.9161 27.5126 80.9161 26.5595C80.9161 25.5613 81.6434 25.0618 83.0991 25.0618C83.6899 25.0618 84.088 25.096 84.2928 25.1641V27.819ZM82.4524 19.6499C81.8837 19.6499 81.332 19.7009 80.798 19.803C80.2636 19.9052 79.837 20.0472 79.5188 20.2285L79.6895 21.8282C80.1671 21.6922 80.5933 21.5959 80.9686 21.539C81.3438 21.4827 81.7244 21.4538 82.1113 21.4538C83.5664 21.4538 84.2944 22.0102 84.2944 23.1216V23.4961C83.9533 23.428 83.4757 23.3941 82.8619 23.3941C81.5879 23.3941 80.5819 23.6781 79.8431 24.2451C79.1037 24.8125 78.7344 25.5954 78.7344 26.5934C78.7344 28.6357 80.133 29.6569 82.9299 29.6569C84.067 29.6569 85.2497 29.4867 86.4774 29.1462V23.2918C86.4774 20.8642 85.1354 19.6499 82.4524 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M94.7312 27.6828C94.4806 27.7737 94.0261 27.819 93.3668 27.819C91.479 27.819 90.5357 26.7866 90.5357 24.7215C90.5357 23.678 90.7798 22.8723 91.2689 22.3049C91.7577 21.7379 92.4459 21.4539 93.3326 21.4539C93.8786 21.4539 94.3443 21.5336 94.7312 21.6922V27.6828ZM94.7321 16.2124V19.8543C94.3228 19.7183 93.7882 19.6502 93.1289 19.6502C91.6732 19.6502 90.4907 20.1212 89.5812 21.0627C88.6715 22.0044 88.2168 23.2358 88.2168 24.7558C88.2168 26.3442 88.6605 27.5585 89.5472 28.3977C90.4341 29.2373 91.7302 29.6569 93.4357 29.6569C94.5045 29.6569 95.6756 29.4868 96.9492 29.1465V16.2124H94.7321Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M101.008 23.6663C101.077 22.9403 101.298 22.3729 101.673 21.9645C102.049 21.5561 102.531 21.3517 103.123 21.3517C103.714 21.3517 104.192 21.5561 104.556 21.9645C104.919 22.3729 105.101 22.9403 105.101 23.6663H101.008ZM107.25 24.1428C107.25 22.759 106.886 21.6638 106.159 20.8581C105.431 20.0531 104.441 19.6499 103.191 19.6499C101.827 19.6499 100.74 20.1041 99.9335 21.0114C99.126 21.9191 98.7227 23.1558 98.7227 24.7214C98.7227 26.2872 99.1544 27.5013 100.019 28.3635C100.883 29.2261 102.111 29.6569 103.703 29.6569C104.748 29.6569 105.738 29.4749 106.67 29.1122L106.431 27.4444C105.635 27.7166 104.782 27.8528 103.873 27.8528C102.008 27.8528 101.053 27.0136 101.008 25.3341H107.25V24.1428Z" fill="#FF5800"/>
+        <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0dpn)"/>
+        <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1dpn)"/>
+        <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2dpn)"/>
+        <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3dpn)"/>
+        <defs>
+          <linearGradient id="p0dpn" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p1dpn" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p2dpn" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p3dpn" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">|&ensp;Detailed Plan</span>
+    </a>
+    <div class="links">
+      <a href="#overview">Overview</a>
+      <a href="#step1">Step 1</a>
+      <a href="#step2">Step 2</a>
+      <a href="#step3">Step 3</a>
+      <a href="#step4">Step 4</a>
+      <a href="#knowledge">Knowledge</a>
+      <div class="nav-dropdown">
+        <a href="#">Agent Pages</a>
+        <div class="nav-dropdown-menu">
+          <a href="step-1-fdd.html"><span class="dd-dot" style="background:#FF5800;"></span>Step 1 — FDD Agent</a>
+          <a href="step-2-tdd.html"><span class="dd-dot" style="background:#0078D4;"></span>Step 2 — TDD Agent</a>
+          <a href="step-3-xpp.html"><span class="dd-dot" style="background:#107C10;"></span>Step 3 — X++ Agent</a>
+          <a href="step-4-cr.html"><span class="dd-dot" style="background:#5C2D91;"></span>Step 4 — Code Review</a>
+        </div>
+      </div>
+      <a href="presentation.html" class="back-link">← Overview</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ PAGE BODY ═══ -->
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="doc-hero reveal">
+    <div class="badge">Final v1 · 30-Mar-2026</div>
+    <h1>D365FO Implementation Framework<br>with <span class="gr">AI Agents</span></h1>
+    <p>A reusable framework that accelerates, standardises, and improves the performance of D365FO consultants and developers using 4 AI agents in sequential steps: <strong>FDD → TDD → X++ → Code Review</strong>. Agents consume knowledge through MS Learn MCP, Ninja MCP Server (584K+ indexed objects), the official Microsoft D365FO MCP Server, and the architect's manifesto.</p>
+    <div class="doc-meta">
+      <div class="doc-meta-item"><span class="di"></span><strong>Platform:</strong> GitHub Copilot Agent Mode</div>
+      <div class="doc-meta-item"><span class="di"></span><strong>Scope:</strong> D365 FnO projects (SCM / HR)</div>
+      <div class="doc-meta-item"><span class="di"></span><strong>Approach:</strong> Human-in-the-loop with checkpoints</div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc reveal">
+    <h3>Contents</h3>
+    <div class="toc-grid">
+      <a href="#overview"><span class="toc-dot" style="background:#FF5800;"></span>Steps Overview</a>
+      <a href="#step1"><span class="toc-dot" style="background:#FF5800;"></span>Step 1 — FDD Generation</a>
+      <a href="#step2"><span class="toc-dot" style="background:#0078D4;"></span>Step 2 — TDD Generation</a>
+      <a href="#step3"><span class="toc-dot" style="background:#107C10;"></span>Step 3 — X++ Code Generation</a>
+      <a href="#step4"><span class="toc-dot" style="background:#5C2D91;"></span>Step 4 — Code Review Agent</a>
+      <a href="#knowledge"><span class="toc-dot" style="background:#FF5800;"></span>Knowledge Sources</a>
+      <a href="#decisions"><span class="toc-dot" style="background:#FF5800;"></span>Captured Decisions</a>
+      <a href="#pending"><span class="toc-dot" style="background:#FF5800;"></span>Pending Items</a>
+    </div>
+  </div>
+
+  <!-- ═══ STEPS OVERVIEW ═══ -->
+  <div class="doc-section reveal" id="overview">
+    <h2 class="section-h">Steps Overview</h2>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Step</th><th>Agent</th><th>Status</th><th>Input</th><th>Output</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td><strong style="color:#FF5800;">FDD Generator</strong></td><td><span class="ok">✅ Implemented</span></td><td>DevOps WI (PBI/CR)</td><td>FDD attached to DevOps</td></tr>
+          <tr><td><strong>2</strong></td><td><strong style="color:#0078D4;">TDD Generator</strong></td><td><span class="part">🔲 To implement</span></td><td>FDD from DevOps</td><td>TDD + Execution Prompt attached to DevOps</td></tr>
+          <tr><td><strong>3</strong></td><td><strong style="color:#107C10;">X++ Code Generator</strong></td><td><span class="part">🔲 To implement</span></td><td>Execution Prompt from DevOps</td><td>X++ code in local model</td></tr>
+          <tr><td><strong>4</strong></td><td><strong style="color:#5C2D91;">Code Review Agent</strong></td><td><span class="part">🔲 To implement</span></td><td>PR on GitHub</td><td>Comments on the PR</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 1 ═══ -->
+  <div class="doc-section reveal" id="step1">
+    <div class="step-header s1">
+      <div class="step-badge">1</div>
+      <div class="step-header-text">
+        <h2>FDD Generation (Functional Design Document)</h2>
+        <div class="sh-sub">Functional Consultant + Agent · Azure DevOps MCP · MS Learn MCP</div>
+      </div>
+      <span class="status-pill implemented">✅ Implemented</span>
+    </div>
+
+    <h3 class="sub-h">Workflow</h3>
+    <ol class="workflow">
+      <li><strong>Input via Azure DevOps</strong> — The agent reads the Work Item (PBI, CR, or other type) and understands the Business Requirement. It analyses all ticket comments for full context. For <strong>Change Requests</strong>: downloads and analyses the FDD from the parent WI. Supports free text as an alternative input.</li>
+      <li><strong>MS Learn Lookup</strong> — Checks what can be handled out-of-the-box by D365FO to minimise customisations.</li>
+      <li><strong>Requirement Classification</strong> — <strong>Standard</strong>: handled natively · <strong>Configuration</strong>: handled via setup (generates a D365FO configuration guide) · <strong>Customisation (GAP)</strong>: requires development.</li>
+      <li><strong>Clarification Requirement Process</strong> — Asks the consultant running the agent. Actively reduces assumptions. If the consultant cannot answer: posts a comment on DevOps tagging the responsible area owner. When the owner replies, the consultant restarts — the agent picks up the clarifications from the ticket comments.</li>
+      <li><strong>Output</strong> — Attaches the FDD to the DevOps ticket (Word or Markdown).</li>
+      <li><strong>Operating modes</strong> — <strong>Autonomous</strong>: generates the full document and attaches it to DevOps for review. <strong>Co-authoring</strong>: the consultant reviews topic by topic before the final document.</li>
+    </ol>
+
+    <h3 class="sub-h">MCP Servers</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>MCP Server</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Azure DevOps MCP</strong></td><td>Reads WI, comments, uploads/downloads attachments, tags users</td></tr>
+          <tr><td><strong>MS Learn MCP</strong></td><td>Official documentation for Standard/Config/GAP classification</td></tr>
+          <tr><td><strong>D365FO MCP Server (MS official)</strong></td><td><em>To be introduced</em> for mockup generation (standard form layouts + custom fields/buttons)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Confirmed Capabilities</h3>
+    <ul class="doc-list">
+      <li>Reads WI + DevOps comments</li>
+      <li>Downloads FDD (Word) from parent WI for context on CRs</li>
+      <li>Standard/Config/GAP classification with configuration guide for config-only items</li>
+      <li>Asynchronous clarification process via DevOps comments</li>
+      <li>Flexible for different WI structures (PBI, CR, etc.)</li>
+      <li>Attaches FDD to the ticket (Word/Markdown)</li>
+    </ul>
+
+    <h3 class="sub-h">Attention Points</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Point</th><th>Type</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Standard vs GAP classification</strong></td><td>Risk</td><td>Agent may make mistakes. Validation with MS Learn evidence partially mitigates this</td></tr>
+          <tr><td><strong>Clarifications without response</strong></td><td>Risk</td><td>If the owner does not reply on DevOps, the FDD remains blocked. Consider timeout/escalation</td></tr>
+          <tr><td><strong>Decision traceability</strong></td><td>Suggestion</td><td>Each classification and clarification should be logged in the FDD for audit purposes</td></tr>
+          <tr><td><strong>FDD versioning on CRs</strong></td><td>Suggestion</td><td>The new FDD should reference what changed compared to the original FDD (semantic diff)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2 ═══ -->
+  <div class="doc-section alt-bg reveal" id="step2">
+    <div class="step-header s2">
+      <div class="step-badge">2</div>
+      <div class="step-header-text">
+        <h2>TDD Generation (Technical Design Document)</h2>
+        <div class="sh-sub">Developer + Agent · Azure DevOps MCP · Ninja MCP · MS Learn MCP</div>
+      </div>
+      <span class="status-pill planned">🔲 To implement</span>
+    </div>
+
+    <h3 class="sub-h">Workflow</h3>
+    <ol class="workflow">
+      <li><strong>Trigger</strong> — The developer invokes the agent via a prompt in VS Code Copilot (or Visual Studio). The agent identifies the WI in DevOps and locates the FDD on the sibling Task.</li>
+      <li><strong>FDD Consumption</strong> — Downloads/reads the FDD from DevOps (via Azure DevOps MCP). Extracts all customisations (GAPs) that need technical design. <em>Future</em>: consume mockups from the FDD to map fields/buttons to AOT objects.</li>
+      <li><strong>Technical Analysis via Ninja MCP</strong> — For each customisation: queries Ninja MCP Server (hybrid mode) to identify AOT objects to extend/create. Identifies tables, fields, forms, classes, data entities, extension points. When unsure: starts a Clarification Process with the developer. <strong>Cites evidence</strong> from Ninja MCP for every design decision.</li>
+      <li><strong>MS Learn MCP Lookup</strong> — Validates extensibility best practices (CoC vs event handler, etc.).</li>
+      <li><strong>Manifesto / Constitution Application</strong> — A local file from the architect that defines: model prefix, prefix/suffix for naming conventions, configurable detail level, and project-specific rules.</li>
+      <li><strong>Clarification Process</strong> — Similar to Step 1: asks the developer about points that need clarification.</li>
+      <li><strong>Operating modes</strong> — <strong>Autonomous</strong>: generates full TDD, attaches to DevOps, posts comment requesting review. <strong>Co-authoring</strong>: developer reviews topic by topic, method by method.</li>
+      <li><strong>Output</strong> — Two artefacts attached to the SubTask in DevOps: <strong>TDD</strong> (full technical document) + <strong>Execution Prompt for X++ Agent</strong> (structured Markdown as executable contract). Comment on WI notifying TDD is ready for review.</li>
+      <li><strong>Lessons Learned Loop</strong> — Developer saves revised TDD with versioned suffix. Agent compares versions → generates structured Lessons Learned → updates lessons file on GitHub → creates a PR for Tech Lead's approval. Once merged, lessons are used in future generations.</li>
+    </ol>
+
+    <h3 class="sub-h">Execution Prompt Schema (Step 2 → Step 3)</h3>
+    <p class="prose">Format: Structured Markdown with sections per object, attached to DevOps as a <code style="font-family:monospace;font-size:0.8em;background:rgba(255,88,0,0.07);padding:0.1rem 0.3rem;border-radius:3px;color:#C74500;">.md</code> file.</p>
+    <div class="code-block">
+<pre><span class="cm"># Execution Prompt — X++ Agent</span>
+
+<span class="cm">## Context</span>
+<span class="key">- WI:</span> <span class="val">#{number} — {title}</span>
+<span class="key">- Primary model:</span> <span class="val">{packageName}</span>
+<span class="key">- Project path:</span> <span class="val">{path to .rnrproj}</span>
+<span class="key">- Manifesto:</span> <span class="val">{manifesto version applied}</span>
+<span class="key">- FDD ref:</span> <span class="val">{link or filename of the FDD}</span>
+<span class="key">- TDD ref:</span> <span class="val">{link or filename of the TDD}</span>
+
+<span class="cm">## Objects (in generation order)</span>
+
+<span class="kw">### [Order] [Type] — [Full name with prefix]</span>
+
+<span class="key">- Action:</span> <span class="val">create | extend</span>
+<span class="key">- AOT Type:</span> <span class="val">table | class | form | enum | edt | view | data-entity | ...</span>
+<span class="key">- Base object (extensions only):</span> <span class="val">{standard/ISV object to extend}</span>
+<span class="key">- Dependencies in this prompt:</span> <span class="val">{list of objects that must exist first}</span>
+
+<span class="cm">#### Specification — Classes (CoC / Event Handler / Batch / SysOp):</span>
+<span class="key">- Type:</span> <span class="val">CoC | EventHandler | BatchJob | SysOperationService | Helper</span>
+<span class="key">- Target object:</span> <span class="val">{class.method or table.method}</span>
+<span class="key">- Extension point:</span> <span class="val">{CoC wrap | pre-event | post-event | delegate}</span>
+<span class="key">- Signature:</span> <span class="val">{full method signature}</span>
+<span class="key">- Logic:</span> <span class="val">{logic description or pseudo-code}</span>
+
+<span class="cm">#### TDD Evidence</span>
+<span class="val">- {Ninja MCP tool} → {result justifying the decision}</span></pre>
+    </div>
+
+    <div class="note"><strong>Note:</strong> The object order follows the 14-step hierarchy from Step 3. The <strong>Dependencies in this prompt</strong> field allows the X++ Agent to validate the generation order. The <strong>TDD Evidence</strong> field preserves traceability of design decisions from Ninja MCP. The developer reviews the Execution Prompt together with the TDD before invoking the X++ Agent.</div>
+
+    <h3 class="sub-h">Ninja MCP Server — Hybrid Mode</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Source</th><th>Content</th><th>Availability</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Azure DB + Blob Storage</strong></td><td>All Microsoft standard code (584K+ indexed AOT objects), ISVs (DocCentric, etc.), internal project assets</td><td>Remote — no dependency on local machine</td></tr>
+          <tr><td><strong>Local File Search</strong></td><td>Project's custom model on the developer's machine</td><td>Local — captures recent changes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose">Result order: Standard MS → ISV → Internal Assets → Custom Model. <strong>Sync:</strong> nightly build machine on Azure DevOps pulls the branch → indexes → updates Azure DB/Blob. Local file search covers the 1-day gap.</p>
+
+    <h3 class="sub-h">Ninja MCP Tools Used by the TDD Agent</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Need</th><th>Tool</th><th>Returns</th></tr></thead>
+        <tbody>
+          <tr><td>Which object to extend?</td><td><code>search</code> / <code>batch_search</code></td><td>Search across 584K+ symbols</td></tr>
+          <tr><td>What can be extended?</td><td><code>analyze_extension_points</code></td><td>CoC-eligible methods, delegates, events</td></tr>
+          <tr><td>CoC or event handler?</td><td><code>recommend_extension_strategy</code></td><td>Best extensibility mechanism</td></tr>
+          <tr><td>Does a CoC already exist?</td><td><code>find_coc_extensions</code></td><td>Existing wrappers</td></tr>
+          <tr><td>Does an event handler already exist?</td><td><code>find_event_handlers</code></td><td>Handlers with classification</td></tr>
+          <tr><td>How do others implement this?</td><td><code>analyze_code_patterns</code> / <code>suggest_method_implementation</code></td><td>Real patterns from the codebase</td></tr>
+          <tr><td>Exact signature?</td><td><code>get_method_signature</code> / <code>get_method_source</code></td><td>Signature + source code</td></tr>
+          <tr><td>Which EDT to use?</td><td><code>suggest_edt</code></td><td>Suggestions with confidence score</td></tr>
+          <tr><td>Fields and relations?</td><td><code>get_table_info</code></td><td>Schema: fields, indexes, FK</td></tr>
+          <tr><td>Best practices?</td><td><code>get_xpp_knowledge</code></td><td>D365FO knowledge base</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Playbook / Skills Structure (Lessons Learned)</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Category</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Extensibility Decisions</strong></td><td>"Prefer event handler over CoC when X scenario"</td></tr>
+          <tr><td><strong>Object Mapping</strong></td><td>"For credit validation, use the CustCreditLimit framework, do not create custom"</td></tr>
+          <tr><td><strong>Naming &amp; Patterns</strong></td><td>"In this project, use _Handler suffix for event handler classes"</td></tr>
+          <tr><td><strong>Common Mistakes</strong></td><td>"Do not extend SalesConfirmJournalPost.postJournal, use the onPosted event"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">MCP Servers</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>MCP Server</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Azure DevOps MCP</strong></td><td>Reads WI/FDD, creates SubTask, uploads TDD, posts comments</td></tr>
+          <tr><td><strong>Ninja MCP Server (hybrid)</strong></td><td>Full context across all layers</td></tr>
+          <tr><td><strong>MS Learn MCP</strong></td><td>Extensibility best practices and D365FO patterns</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Attention Points — All Resolved</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Point</th><th>Status</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Inconsistent detail level</strong></td><td><span class="ok">✅</span></td><td>Manifesto + Lessons Learned Loop + co-authoring mode</td></tr>
+          <tr><td><strong>Ninja MCP hybrid sync</strong></td><td><span class="ok">✅</span></td><td>Local file search (priority) + nightly sync via build machine</td></tr>
+          <tr><td><strong>Mapping without mockups</strong></td><td><span class="ok">✅</span></td><td>Manual mockups (current) + Clarification Process + automatic mockups (future)</td></tr>
+          <tr><td><strong>Decisions without evidence</strong></td><td><span class="ok">✅</span></td><td>Ninja MCP provides structured evidence (54 tools) — agent cites sources</td></tr>
+          <tr><td><strong>TDD as a contract for Step 3</strong></td><td><span class="ok">✅</span></td><td>Manifesto defines minimum required level + Execution Prompt as executable contract</td></tr>
+          <tr><td><strong>FDD→TDD traceability</strong></td><td><span class="ok">✅</span></td><td>Document naming + native DevOps links (via Azure DevOps MCP)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3 ═══ -->
+  <div class="doc-section reveal" id="step3">
+    <div class="step-header s3">
+      <div class="step-badge">3</div>
+      <div class="step-header-text">
+        <h2>X++ Code Generation</h2>
+        <div class="sh-sub">Developer + Agent · Ninja MCP · Azure DevOps MCP · MS Learn MCP</div>
+      </div>
+      <span class="status-pill planned">🔲 To implement</span>
+    </div>
+
+    <h3 class="sub-h">Workflow</h3>
+    <ol class="workflow">
+      <li><strong>Pre-requisite: Developer creates Solution and Projects</strong> — The developer manually creates the VS Solution (.sln) and D365FO projects (.rnrproj) inside it, linking each project to the corresponding model. Reason: Ninja MCP does not create Solutions or .rnrproj files — it only creates/modifies AOT objects inside existing projects.</li>
+      <li><strong>Trigger</strong> — The developer invokes the agent via a prompt in VS Code Copilot (or Visual Studio).</li>
+      <li><strong>Execution Prompt Consumption</strong> — Downloads the Execution Prompt file from DevOps (generated by the TDD Agent in Step 2). Contains specific instructions for each object to create/extend.</li>
+      <li><strong>Local Context Analysis</strong> — Reads local config for VS project folder and target model. Queries Ninja MCP for full metadata of standard objects to extend. Runs local file search to check for objects that already exist in the model (to avoid duplication/conflicts).</li>
+      <li><strong>Generation Plan with Confirmation</strong> — The agent analyses the Execution Prompt, lists all object types organised by the dependency hierarchy, presents the plan to the developer, and waits for confirmation before starting generation.</li>
+      <li><strong>Hierarchical Object Generation</strong> — Generates objects following D365FO's compilation dependency order (14 steps). Each step can be confirmed individually. Only relevant steps are generated based on the Execution Prompt.</li>
+      <li><strong>Build Validation Loop</strong> — After each step: compiles via <code>build_d365fo_project</code> → analyses errors via <code>get_d365fo_error_help</code> → runs BP checks via <code>run_bp_check</code> → tries to fix automatically → if unable to fix: asks the developer.</li>
+      <li><strong>Output</strong> — Generated files in the developer's local model folder. The developer creates the PR on GitHub manually.</li>
+    </ol>
+
+    <h3 class="sub-h">14-Step Object Generation Hierarchy</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Order</th><th>Object Type</th><th>Reason</th><th>Ninja MCP Tool</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Labels</strong></td><td>No dependencies — everything references them</td><td><code>create_label</code> (search first with <code>search_labels</code>)</td></tr>
+          <tr><td>2</td><td><strong>Base Enums + Enum Extensions</strong></td><td>EDTs can have an EnumType that references enums</td><td><code>create_d365fo_file</code> (enum, enum-extension)</td></tr>
+          <tr><td>3</td><td><strong>EDTs + EDT Extensions</strong></td><td>After enums; tables/fields reference EDTs</td><td><code>create_d365fo_file</code> (edt, edt-extension) / <code>suggest_edt</code></td></tr>
+          <tr><td>4</td><td><strong>Tables + Fields + Indexes + Relations + Field Groups</strong></td><td>After EDTs/Enums — foundation of all data structures</td><td><code>create_d365fo_file</code> (table) / <code>generate_smart_table</code></td></tr>
+          <tr><td>5</td><td><strong>Table Extensions</strong></td><td>Added fields may be referenced by views, entities, forms</td><td><code>create_d365fo_file</code> (table-extension) / <code>modify_d365fo_file</code></td></tr>
+          <tr><td>6</td><td><strong>Views</strong></td><td>Reference tables as datasource</td><td><code>create_d365fo_file</code> (view)</td></tr>
+          <tr><td>7</td><td><strong>Queries</strong></td><td>Reference tables and views</td><td><code>create_d365fo_file</code> (query)</td></tr>
+          <tr><td>8</td><td><strong>Data Entities + Extensions</strong></td><td>After tables, views and queries (used as datasource)</td><td><code>create_d365fo_file</code> (data-entity, data-entity-extension)</td></tr>
+          <tr><td>9</td><td><strong>Classes</strong> (CoC, Event Handlers, Batch, SysOperation, helpers)</td><td>After tables/EDTs/enums — business logic</td><td><code>generate_code</code> / <code>create_d365fo_file</code> (class, class-extension)</td></tr>
+          <tr><td>10</td><td><strong>Forms + Form Extensions</strong></td><td>After tables and classes (datasources + logic)</td><td><code>create_d365fo_file</code> (form, form-extension) / <code>generate_smart_form</code></td></tr>
+          <tr><td>11</td><td><strong>Reports</strong> (SSRS: TmpTable → Contract → DP → Controller → AxReport)</td><td>After tables and classes (5 interdependent objects)</td><td><code>generate_smart_report</code></td></tr>
+          <tr><td>12</td><td><strong>Menu Items</strong> (Display, Action, Output + Extensions)</td><td>After forms, classes, reports (point to them)</td><td><code>create_d365fo_file</code> (menu-item-*)</td></tr>
+          <tr><td>13</td><td><strong>Menus + Menu Extensions</strong></td><td>After menu items</td><td><code>create_d365fo_file</code> (menu, menu-extension)</td></tr>
+          <tr><td>14</td><td><strong>Security</strong> (Privileges → Duties → Roles)</td><td>Last — privileges reference entry points (menu items)</td><td><code>create_d365fo_file</code> (security-privilege, security-duty, security-role)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Ninja MCP Tools Used by the X++ Generator</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Action</th><th>Tool</th></tr></thead>
+        <tbody>
+          <tr><td>Create AOT objects</td><td><code>create_d365fo_file</code> (26+ supported types)</td></tr>
+          <tr><td>Modify objects</td><td><code>modify_d365fo_file</code> (25+ operations)</td></tr>
+          <tr><td>Generate boilerplate</td><td><code>generate_code</code> (CoC, batch, SysOperation, event handler, etc.)</td></tr>
+          <tr><td>Smart scaffolding</td><td><code>generate_smart_table</code> / <code>generate_smart_form</code> / <code>generate_smart_report</code></td></tr>
+          <tr><td>Generate AOT XML</td><td><code>generate_d365fo_xml</code></td></tr>
+          <tr><td>Look up exact signatures</td><td><code>get_method_signature</code> / <code>get_method_source</code></td></tr>
+          <tr><td>Check existing CoC</td><td><code>find_coc_extensions</code></td></tr>
+          <tr><td>Suggest EDT</td><td><code>suggest_edt</code></td></tr>
+          <tr><td>Create labels</td><td><code>create_label</code> (searches existing with <code>search_labels</code> first)</td></tr>
+          <tr><td>Compile project</td><td><code>build_d365fo_project</code></td></tr>
+          <tr><td>Error diagnostics</td><td><code>get_d365fo_error_help</code></td></tr>
+          <tr><td>Best practice check</td><td><code>run_bp_check</code></td></tr>
+          <tr><td>DB sync</td><td><code>trigger_db_sync</code></td></tr>
+          <tr><td>Verify project</td><td><code>verify_d365fo_project</code></td></tr>
+          <tr><td>Update index</td><td><code>update_symbol_index</code></td></tr>
+          <tr><td>Undo change</td><td><code>undo_last_modification</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Attention Points</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Point</th><th>Type</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Code does not compile</strong></td><td>Risk</td><td><span class="ok">✅ Mitigated</span></td><td>Build Validation Loop: compile → diagnose → fix → ask the developer</td></tr>
+          <tr><td><strong>Malformed metadata XML</strong></td><td>Risk</td><td><span class="ok">✅ Mitigated</span></td><td>Ninja MCP generates XML via C# bridge (IMetadataProvider)</td></tr>
+          <tr><td><strong>Conflicts with existing objects</strong></td><td>Risk</td><td><span class="ok">✅ Mitigated</span></td><td>Local file search is mandatory; Ninja MCP verifies the project</td></tr>
+          <tr><td><strong>Ignored BP warnings</strong></td><td>Risk</td><td><span class="ok">✅ Mitigated</span></td><td><code>run_bp_check</code> integrated into the validation loop after every generation step</td></tr>
+          <tr><td><strong>ISV context</strong></td><td>Risk</td><td><span class="part">⚠ Partial</span></td><td>Ninja MCP indexes ISVs, but extension points may be limited depending on ISV package</td></tr>
+          <tr><td><strong>Execution Prompt (Step 2→3)</strong></td><td>Design</td><td><span class="ok">✅ Decided</span></td><td>Structured Markdown with sections per object — schema defined in Step 2</td></tr>
+          <tr><td><strong>Incremental generation</strong></td><td>Suggestion</td><td>—</td><td>Generating 1 object at a time makes debugging easier; Build Validation confirms each step</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4 ═══ -->
+  <div class="doc-section alt-bg reveal" id="step4">
+    <div class="step-header s4">
+      <div class="step-badge">4</div>
+      <div class="step-header-text">
+        <h2>Code Review Agent</h2>
+        <div class="sh-sub">Tech Lead + Agent · GitHub MCP · MS Learn MCP · Manifesto / Context</div>
+      </div>
+      <span class="status-pill planned">🔲 To implement</span>
+    </div>
+
+    <h3 class="sub-h">Workflow</h3>
+    <ol class="workflow">
+      <li><strong>Trigger</strong> — To be defined: GitHub Action on the PR (<em>research feasibility</em>) or manual invocation by the developer/tech lead.</li>
+      <li><strong>PR Consumption</strong> — Analyses the code diff in the GitHub Pull Request.</li>
+      <li><strong>Validation against best practices</strong> — Queries MS Learn MCP to validate against official patterns. Queries best practice reference sources specified in the Manifesto / Context. Queries the Code Review Agent's Playbook / Skills (lessons learned from previous reviews).</li>
+      <li><strong>Output</strong> — Posts detailed comments on the GitHub PR with: issues found (naming, patterns, security, performance), fix suggestions, and reference to the violated best practice.</li>
+      <li><strong>Human checkpoint</strong> — The Tech Lead evaluates the comments and gives the final PR approval.</li>
+    </ol>
+
+    <h3 class="sub-h">Lessons Learned — Code Review Agent</h3>
+    <p class="prose">Scope: <strong>architectural best practices</strong> synthesised from the Tech Lead's comments on PRs. The agent analyses the Tech Lead's PR comments + code in context → synthesises them into rules for future PRs → generates a PR on GitHub updating the Playbook for the Tech Lead's approval.</p>
+    <ul class="doc-list">
+      <li>"Always validate TTS level before calling an external service"</li>
+      <li>"Prefer set-based operations over row-by-row for tables with &gt; 1,000 records"</li>
+      <li>"Security: never use unchecked(classStr()) in privilege assignments"</li>
+    </ul>
+
+    <h3 class="sub-h">MCP Servers</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>MCP Server</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>MS Learn MCP</strong></td><td>Official best practices</td></tr>
+          <tr><td><strong>GitHub MCP</strong></td><td>Reads PR, posts comments (<em>trigger via GitHub Action to be confirmed</em>)</td></tr>
+          <tr><td><strong>Manifesto / Context</strong></td><td>Project-specific custom rules</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Attention Points</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Point</th><th>Type</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Code Review trigger</strong></td><td>Research</td><td><span class="no">🔲 Pending</span></td><td>Investigate GitHub Actions to invoke the agent automatically on a PR</td></tr>
+          <tr><td><strong>Review scope</strong></td><td>Design</td><td><span class="no">🔲 Pending</span></td><td>Define the validation checklist (naming, security, performance, patterns)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ KNOWLEDGE SOURCES ═══ -->
+  <div class="doc-section reveal" id="knowledge">
+    <h2 class="section-h">Knowledge Sources Architecture</h2>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Source</th><th>Type</th><th>Content</th><th>Steps</th></tr></thead>
+        <tbody>
+          <tr><td><strong>MS Learn MCP</strong></td><td>External</td><td>Official MS documentation, best practices</td><td>1, 2, 3, 4</td></tr>
+          <tr><td><strong>Ninja MCP Server (hybrid)</strong></td><td>Custom</td><td>584K+ indexed AOT objects (standard/ISV/assets) + local model</td><td>2, 3</td></tr>
+          <tr><td><strong>D365FO MCP Server (MS official)</strong></td><td>External</td><td>Standard form layouts for mockups</td><td>1</td></tr>
+          <tr><td><strong>Azure DevOps MCP</strong></td><td>External</td><td>Work items, FDD/TDD, comments, attachments</td><td>1, 2, 3</td></tr>
+          <tr><td><strong>Manifesto / Constitution</strong></td><td>Local</td><td>Project rules (prefix, naming, detail level)</td><td>2, 3, 4</td></tr>
+          <tr><td><strong>Playbook / Skills (Lessons Learned)</strong></td><td>GitHub</td><td>Categorised lessons learned per agent</td><td>2, 3, 4</td></tr>
+          <tr><td><strong>Local Config (.md)</strong></td><td>Local</td><td>VS project folder, target model</td><td>3</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">Playbooks per Agent</h3>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Playbook</th><th>Agent</th><th>Lessons Scope</th></tr></thead>
+        <tbody>
+          <tr><td><strong>TDD Playbook</strong></td><td>Step 2 — TDD Generator</td><td>Extensibility decisions, object mapping, naming, design mistakes</td></tr>
+          <tr><td><strong>X++ Generator Playbook</strong></td><td>Step 3 — X++ Generator</td><td>Compilation fixes, BP warnings, code patterns</td></tr>
+          <tr><td><strong>Code Review Playbook</strong></td><td>Step 4 — Code Review</td><td>Architectural best practices synthesised from Tech Lead PRs</td></tr>
+          <tr><td><em>FDD Playbook (future)</em></td><td>Step 1 — FDD Generator</td><td>Standard/GAP classification, recurring clarifications</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ CAPTURED DECISIONS ═══ -->
+  <div class="doc-section alt-bg reveal" id="decisions">
+    <h2 class="section-h">Captured Decisions</h2>
+    <div class="decision-grid">
+      <div class="decision-card"><h5>Platform</h5><p>GitHub Copilot Agent Mode</p></div>
+      <div class="decision-card"><h5>Approach</h5><p>Human-in-the-loop with checkpoints between each step</p></div>
+      <div class="decision-card"><h5>Templates</h5><p>Word today, migration to Markdown planned</p></div>
+      <div class="decision-card"><h5>FDD/TDD Output</h5><p>Azure DevOps work items (attachments + SubTasks)</p></div>
+      <div class="decision-card"><h5>TDD → X++ Contract</h5><p>Execution Prompt generated by the TDD Agent, attached to DevOps as an executable contract</p></div>
+      <div class="decision-card"><h5>X++ Output</h5><p>Local model folder — developer creates the PR on GitHub manually</p></div>
+      <div class="decision-card"><h5>Code Review</h5><p>Separate agent (Step 4) on GitHub PR — Tech Lead approves</p></div>
+      <div class="decision-card"><h5>Lessons Learned</h5><p>Playbook per agent on GitHub with PR for Tech Lead approval</p></div>
+      <div class="decision-card"><h5>Ninja MCP Sync</h5><p>Nightly build machine + local file search with priority</p></div>
+      <div class="decision-card"><h5>Mockups</h5><p>Manual by consultants (current); automatic via MS D365FO MCP Server (future)</p></div>
+      <div class="decision-card"><h5>Solution / Projects</h5><p>Created manually by the developer before invoking the X++ Agent. Ninja MCP does not create <code>.sln</code>/<code>.rnrproj</code> — only AOT objects inside existing projects.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ PENDING ITEMS ═══ -->
+  <div class="doc-section reveal" id="pending">
+    <h2 class="section-h">Pending Items (Cross-Step)</h2>
+    <div class="table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>#</th><th>Item</th><th>Options</th><th>Recommendation</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Orchestration between steps</strong> — How will the handoff Step 1→2→3→4 be managed?</td><td>(A) Manual; (B) Semi-auto — agent notifies when previous step is approved; (C) DevOps pipeline trigger</td><td>Start with (A), evolve to (B)</td></tr>
+          <tr><td>2</td><td><strong>Template versioning</strong> — Templates change, old FDDs become inconsistent</td><td>Version templates together with the Playbook</td><td>To be defined</td></tr>
+          <tr><td>3</td><td><strong>Reverse feedback loop</strong> — Code Review (Step 4) finds architectural issues: should it feed back into the TDD?</td><td>(A) Only fix the code; (B) Feed back into TDD + Lessons Learned</td><td>(B) via Lessons Learned</td></tr>
+          <tr><td>4</td><td><strong>Multi-model</strong> — Project with integration + functional models</td><td>Developer creates Solution + projects per model; Ninja MCP accepts <code>packageName</code>/<code>projectPath</code> per tool call</td><td><span class="ok">✅ Decided</span></td></tr>
+          <tr><td>5</td><td><strong>Partial regeneration</strong> — Redo 1 of 5 customisations without affecting the others</td><td>Granular FDD→TDD→code traceability</td><td>Feasible with DevOps links</td></tr>
+          <tr><td>6</td><td><strong>Execution Prompt (Step 2→3)</strong> — Define schema/format</td><td>Structured Markdown with sections per object</td><td><span class="ok">✅ Decided</span></td></tr>
+          <tr><td>7</td><td><strong>Code Review trigger (Step 4)</strong> — How to invoke the agent on a PR?</td><td>GitHub Action vs. manual invocation</td><td><span class="no">🔲 Research</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="blockquote" style="margin-top:2rem;"><strong>Next step:</strong> discuss pending cross-step items and/or start implementing Step 2.</div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <a href="presentation.html" class="prev">← Back to Overview</a>
+    <a href="step-1-fdd.html" class="next">Step 1 — FDD Agent →</a>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div style="margin-bottom:1rem;">
+    <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:24px;width:75px;">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M64.1487 27.819C63.7394 27.9328 63.2731 27.9891 62.7503 27.9891C61.4313 27.9891 60.7718 27.5126 60.7718 26.5595C60.7718 25.5613 61.4993 25.0618 62.955 25.0618C63.5459 25.0618 63.944 25.096 64.1487 25.1641V27.819ZM62.3078 19.6499C61.7392 19.6499 61.1875 19.7009 60.6535 19.803C60.1191 19.9052 59.6925 20.0472 59.3742 20.2285L59.545 21.8282C60.0225 21.6922 60.4487 21.5959 60.824 21.539C61.1993 21.4827 61.5799 21.4538 61.9668 21.4538C63.4219 21.4538 64.1498 22.0102 64.1498 23.1216V23.4961C63.8088 23.428 63.3312 23.3941 62.7174 23.3941C61.4434 23.3941 60.4371 23.6781 59.6984 24.2451C58.9592 24.8125 58.5898 25.5954 58.5898 26.5934C58.5898 28.6357 59.9885 29.6569 62.7854 29.6569C63.9222 29.6569 65.1052 29.4867 66.3329 29.1462V23.2918C66.3329 20.8642 64.9908 19.6499 62.3078 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M74.777 23.8028C74.777 22.9408 74.6117 22.3449 74.2823 22.0158C73.9524 21.6873 73.3667 21.5224 72.5257 21.5224C72.3209 21.5224 72.0764 21.5451 71.7922 21.5903C71.5076 21.6362 71.2407 21.6925 70.9905 21.7604V29.4189H68.7734V20.365C69.3414 20.1385 69.9897 19.9625 70.7177 19.8374C71.4452 19.713 72.1504 19.6504 72.8327 19.6504C75.6068 19.6504 76.994 20.8984 76.994 23.3943V29.4189H74.777V23.8028Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M84.2928 27.819C83.8835 27.9328 83.4171 27.9891 82.8943 27.9891C81.5751 27.9891 80.9161 27.5126 80.9161 26.5595C80.9161 25.5613 81.6434 25.0618 83.0991 25.0618C83.6899 25.0618 84.088 25.096 84.2928 25.1641V27.819ZM82.4524 19.6499C81.8837 19.6499 81.332 19.7009 80.798 19.803C80.2636 19.9052 79.837 20.0472 79.5188 20.2285L79.6895 21.8282C80.1671 21.6922 80.5933 21.5959 80.9686 21.539C81.3438 21.4827 81.7244 21.4538 82.1113 21.4538C83.5664 21.4538 84.2944 22.0102 84.2944 23.1216V23.4961C83.9533 23.428 83.4757 23.3941 82.8619 23.3941C81.5879 23.3941 80.5819 23.6781 79.8431 24.2451C79.1037 24.8125 78.7344 25.5954 78.7344 26.5934C78.7344 28.6357 80.133 29.6569 82.9299 29.6569C84.067 29.6569 85.2497 29.4867 86.4774 29.1462V23.2918C86.4774 20.8642 85.1354 19.6499 82.4524 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M94.7312 27.6828C94.4806 27.7737 94.0261 27.819 93.3668 27.819C91.479 27.819 90.5357 26.7866 90.5357 24.7215C90.5357 23.678 90.7798 22.8723 91.2689 22.3049C91.7577 21.7379 92.4459 21.4539 93.3326 21.4539C93.8786 21.4539 94.3443 21.5336 94.7312 21.6922V27.6828ZM94.7321 16.2124V19.8543C94.3228 19.7183 93.7882 19.6502 93.1289 19.6502C91.6732 19.6502 90.4907 20.1212 89.5812 21.0627C88.6715 22.0044 88.2168 23.2358 88.2168 24.7558C88.2168 26.3442 88.6605 27.5585 89.5472 28.3977C90.4341 29.2373 91.7302 29.6569 93.4357 29.6569C94.5045 29.6569 95.6756 29.4868 96.9492 29.1465V16.2124H94.7321Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M101.008 23.6663C101.077 22.9403 101.298 22.3729 101.673 21.9645C102.049 21.5561 102.531 21.3517 103.123 21.3517C103.714 21.3517 104.192 21.5561 104.556 21.9645C104.919 22.3729 105.101 22.9403 105.101 23.6663H101.008ZM107.25 24.1428C107.25 22.759 106.886 21.6638 106.159 20.8581C105.431 20.0531 104.441 19.6499 103.191 19.6499C101.827 19.6499 100.74 20.1041 99.9335 21.0114C99.126 21.9191 98.7227 23.1558 98.7227 24.7214C98.7227 26.2872 99.1544 27.5013 100.019 28.3635C100.883 29.2261 102.111 29.6569 103.703 29.6569C104.748 29.6569 105.738 29.4749 106.67 29.1122L106.431 27.4444C105.635 27.7166 104.782 27.8528 103.873 27.8528C102.008 27.8528 101.053 27.0136 101.008 25.3341H107.25V24.1428Z" fill="#FF5800"/>
+      <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0dpf)"/>
+      <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1dpf)"/>
+      <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2dpf)"/>
+      <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3dpf)"/>
+      <defs>
+        <linearGradient id="p0dpf" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p1dpf" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p2dpf" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p3dpf" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <strong>D365FO AI-Driven Delivery Framework</strong> — Detailed Implementation Plan v1<br>
+  <span style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; display:inline-block;">&copy; Avanade Inc. · Final v1 · 30-Mar-2026</span>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

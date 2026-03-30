@@ -1,0 +1,1713 @@
+﻿?<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D365FO AI-Driven Delivery Framework — Avanade</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #FAFAFA;
+    --accent: #FF5800;
+    --accent-light: #E04E00;
+    --accent-glow: rgba(255, 88, 0, 0.08);
+    --green: #16a34a;
+    --green-glow: rgba(22, 163, 74, 0.08);
+    --amber: #FF5800;
+    --amber-glow: rgba(255, 88, 0, 0.06);
+    --red: #dc2626;
+    --cyan: #FF5800;
+    --cyan-glow: rgba(255, 88, 0, 0.06);
+    --text-primary: #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    --border: rgba(0,0,0,0.10);
+    --border-accent: rgba(255, 88, 0, 0.3);
+    --avanade-orange: #FF5800;
+    --avanade-orange-light: #E04E00;
+    --avanade-orange-glow: rgba(255, 88, 0, 0.10);
+    --phase-cyan: #06b6d4;
+    --phase-purple: #818cf8;
+    --phase-green: #16a34a;
+    --phase-amber: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── AVANADE DIAGONAL MESH PATTERN ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        transparent,
+        transparent 40px,
+        rgba(255, 88, 0, 0.035) 40px,
+        rgba(255, 88, 0, 0.035) 41px
+      ),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 40px,
+        rgba(255, 88, 0, 0.035) 40px,
+        rgba(255, 88, 0, 0.035) 41px
+      );
+  }
+
+  /* ── AVANADE ANGULAR GEOMETRIC ACCENTS ── */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%; right: -20%;
+    width: 800px; height: 800px;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      linear-gradient(135deg, rgba(255,88,0,0.05) 0%, transparent 50%);
+    transform: rotate(-15deg);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    transition: transform 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  nav .inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  nav .logo {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-weight: 800; font-size: 1rem; letter-spacing: -0.02em;
+    color: var(--avanade-orange); flex-shrink: 0;
+  }
+  nav .logo svg { height: 28px; width: 75px; }
+  nav .logo .logo-text {
+    font-weight: 700; font-size: 0.85rem; color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+  nav .links { display: flex; gap: 1.5rem; }
+  nav .links a {
+    color: var(--text-secondary); text-decoration: none; font-size: 0.8rem;
+    font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav .links a:hover { color: var(--avanade-orange); }
+
+  /* ── NAV DROPDOWN ── */
+  .nav-dropdown {
+    position: relative;
+  }
+  .nav-dropdown > a::after {
+    content: ' ▾'; font-size: 0.6em; vertical-align: middle;
+  }
+  .nav-dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.5rem 0; min-width: 220px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    z-index: 200;
+  }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 1.2rem !important; font-size: 0.78rem !important;
+    text-transform: none !important; letter-spacing: 0 !important;
+    color: var(--text-secondary) !important; white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-dropdown-menu a:hover {
+    background: var(--accent-glow); color: var(--avanade-orange) !important;
+  }
+  .nav-dropdown-menu .dd-dot {
+    width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+    z-index: 1;
+  }
+  .container { max-width: 1100px; width: 100%; margin: 0 auto; }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    background:
+      linear-gradient(160deg, rgba(255,88,0,0.06) 0%, transparent 40%),
+      linear-gradient(200deg, transparent 60%, rgba(255,88,0,0.04) 100%),
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,88,0,0.06) 0%, transparent 70%);
+  }
+  /* Avanade diagonal accent shape on hero */
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(155deg, transparent 0%, transparent 65%, rgba(255,88,0,0.04) 65%, rgba(255,88,0,0.04) 75%, transparent 75%);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 400px; height: 100%;
+    pointer-events: none;
+    background: linear-gradient(170deg, rgba(255,88,0,0.05) 0%, transparent 60%);
+    clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 1rem; border-radius: 100px;
+    background: var(--accent-glow); border: 1px solid var(--border-accent);
+    font-size: 0.75rem; font-weight: 600; color: var(--accent-light);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+  .hero .badge .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900;
+    letter-spacing: -0.03em; line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, #FF5800 0%, #FF8C42 50%, #FFB380 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero .subtitle {
+    font-size: 1.2rem; color: var(--text-secondary); max-width: 700px;
+    margin: 0 auto 3rem; font-weight: 400; line-height: 1.7;
+  }
+  .hero .subtitle strong { color: #1A1A1A; font-weight: 600; }
+
+  /* ── PIPELINE ── */
+  .pipeline-track {
+    display: flex; gap: 0; justify-content: center; align-items: stretch;
+    margin: 3rem 0 1rem; flex-wrap: wrap;
+  }
+  .pipeline-card {
+    flex: 1; min-width: 200px; max-width: 260px;
+    padding: 1.5rem; text-align: center;
+    background: var(--bg-card); border: 1px solid var(--border);
+    position: relative;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+  .pipeline-card:first-child { border-radius: 12px 0 0 12px; }
+  .pipeline-card:last-child { border-radius: 0 12px 12px 0; }
+  .pipeline-card {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .pipeline-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(255,88,0,0.12);
+    border-color: var(--border-accent);
+    z-index: 2;
+  }
+  .pipeline-card .phase-num {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent-light); margin-bottom: 0.5rem;
+  }
+  .pipeline-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .pipeline-card .role { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  .pipeline-card .io {
+    font-size: 0.7rem; color: var(--text-secondary); text-align: left;
+    border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: auto;
+  }
+  .pipeline-card .io span { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 0.05em; }
+  .pipeline-arrow {
+    display: flex; align-items: center; color: var(--text-muted); font-size: 1.5rem;
+    padding: 0 0.3rem;
+  }
+  .status-live {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.65rem;
+    font-weight: 600; letter-spacing: 0.03em;
+  }
+  .status-live.green { background: var(--green-glow); color: var(--green); }
+  .status-live.amber { background: var(--amber-glow); color: var(--amber); }
+
+  /* ── SECTION HEADERS ── */
+  .section-label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent-light); margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
+    letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem;
+  }
+  .section-sub {
+    font-size: 1.05rem; color: var(--text-secondary); max-width: 650px;
+    line-height: 1.7; margin-bottom: 2.5rem;
+  }
+
+  /* ── PROBLEM ── */
+  .problem-section {
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,88,0,0.03) 0%, transparent 70%);
+  }
+  .problem-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,88,0,0.4) 20%, rgba(255,88,0,0.4) 80%, transparent 100%);
+    transform: skewX(-25deg);
+  }
+
+  /* ── CHALLENGE PILLARS ── */
+  .challenge-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem; margin: 2.5rem 0;
+  }
+  .challenge-card {
+    padding: 2rem 1.5rem; border-radius: 14px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    text-align: left; position: relative; overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .challenge-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--avanade-orange);
+  }
+  .challenge-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(255,88,0,0.10);
+  }
+  .challenge-card .ch-icon {
+    font-size: 1.8rem; margin-bottom: 1rem;
+  }
+  .challenge-card h4 {
+    font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .challenge-card p {
+    font-size: 0.85rem; color: var(--text-secondary); line-height: 1.65;
+  }
+  .challenge-card .ch-roles {
+    display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 1rem;
+  }
+  .challenge-card .ch-role {
+    font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 100px; background: var(--accent-glow); color: var(--accent-light);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── PRINCIPLE STRIP ── */
+  .principle-strip {
+    display: flex; gap: 0; justify-content: center; align-items: stretch;
+    margin: 2.5rem 0 1rem; flex-wrap: wrap;
+  }
+  .principle-item {
+    flex: 1; min-width: 180px; max-width: 280px;
+    padding: 1.2rem 1rem; text-align: center;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    transition: all 0.3s;
+  }
+  .principle-item:first-child { border-radius: 10px 0 0 10px; }
+  .principle-item:last-child { border-radius: 0 10px 10px 0; }
+  .principle-item:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 4px 16px rgba(255,88,0,0.08);
+  }
+  .principle-item .pr-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .principle-item h5 {
+    font-size: 0.8rem; font-weight: 700; margin-bottom: 0.3rem;
+    color: var(--avanade-orange);
+  }
+  .principle-item p {
+    font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5;
+  }
+
+  /* ── KNOWLEDGE GRID ── */
+  .knowledge-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-top: 2rem;
+  }
+  .k-card {
+    padding: 1.5rem; border-radius: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .k-card {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .k-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255,88,0,0.10);
+  }
+  .k-card .k-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; margin-bottom: 1rem; font-weight: 700;
+  }
+  .k-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .k-card p { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
+  .k-card .k-tag {
+    display: inline-block; margin-top: 0.75rem; padding: 0.15rem 0.5rem;
+    border-radius: 4px; font-size: 0.65rem; font-weight: 600;
+    background: var(--accent-glow); color: var(--accent-light);
+  }
+
+  /* ── STEP DETAIL ── */
+  .phase-detail {
+    padding: 5rem 2rem; position: relative;
+    z-index: 1;
+  }
+  .phase-detail + .phase-detail { border-top: 1px solid var(--border); }
+  /* Avanade diagonal accent on alternate step sections */
+  .phase-detail:nth-child(odd)::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(165deg, transparent 0%, transparent 85%, rgba(255,88,0,0.02) 85%, rgba(255,88,0,0.02) 100%);
+  }
+  .phase-detail:nth-child(even)::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(195deg, rgba(255,88,0,0.02) 0%, rgba(255,88,0,0.02) 15%, transparent 15%, transparent 100%);
+  }
+
+  .connections-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    margin-top: 2rem;
+  }
+  @media (max-width: 768px) { .connections-grid { grid-template-columns: 1fr; } }
+
+  .conn-card {
+    padding: 1.25rem; border-radius: 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .conn-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .conn-card:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 4px 20px rgba(255,88,0,0.10);
+  }
+  .conn-card .conn-type {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 0.5rem; display: flex;
+    align-items: center; gap: 0.4rem;
+  }
+  .conn-card .conn-type .dot-indicator {
+    width: 5px; height: 5px; border-radius: 50%;
+  }
+  .conn-card h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .conn-card p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; }
+  .conn-card ul {
+    list-style: none; margin-top: 0.5rem;
+  }
+  .conn-card ul li {
+    font-size: 0.75rem; color: var(--text-secondary); padding: 0.15rem 0;
+    padding-left: 1rem; position: relative;
+  }
+  .conn-card ul li::before {
+    content: '›'; position: absolute; left: 0; color: var(--accent-light); font-weight: 700;
+  }
+
+  .type-mcp .dot-indicator { background: var(--avanade-orange); }
+  .type-mcp .conn-type { color: var(--avanade-orange); }
+  .type-human .dot-indicator { background: #C74500; }
+  .type-human .conn-type { color: #C74500; }
+  .type-git .dot-indicator { background: #CC6B30; }
+  .type-git .conn-type { color: #CC6B30; }
+  .type-local .dot-indicator { background: #C74500; }
+  .type-local .conn-type { color: #C74500; }
+  .type-output .dot-indicator { background: var(--text-muted); }
+  .type-output .conn-type { color: var(--text-muted); }
+
+  .conn-card.span-2 { grid-column: 1 / -1; }
+
+  /* ── LEARNING LOOP ── */
+  .loop-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin: 2.5rem 0; flex-wrap: wrap;
+  }
+  .loop-step {
+    padding: 0.8rem 1.2rem; border-radius: 8px; text-align: center;
+    background: var(--bg-card); border: 1px solid var(--border);
+    min-width: 140px;
+  }
+  .loop-step .step-label {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.3rem;
+  }
+  .loop-step .step-text { font-size: 0.8rem; font-weight: 600; }
+  .loop-arrow { font-size: 1.2rem; color: var(--avanade-orange); padding: 0 0.4rem; }
+
+  /* ── HIERARCHY ── */
+  .hierarchy-track {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1.5rem 0;
+    align-items: center;
+  }
+  .h-step {
+    padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); transition: all 0.3s;
+  }
+  .h-step:hover { border-color: var(--border-accent); color: var(--text-primary); }
+  .h-arrow { color: var(--text-muted); font-size: 0.75rem; }
+  .h-step .h-num {
+    font-size: 0.55rem; font-weight: 800; color: var(--accent-light);
+    margin-right: 0.3rem;
+  }
+
+  /* ── IMPACT TABLE ── */
+  .impact-grid {
+    display: grid; grid-template-columns: 140px 1fr 1fr; gap: 0;
+    border-radius: 12px; overflow: hidden; margin: 2rem 0;
+    border: 1px solid var(--border);
+  }
+  .impact-header {
+    padding: 0.8rem 1.2rem; font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+  }
+  .impact-header.step { background: rgba(0,0,0,0.03); color: var(--text-primary); }
+  .impact-header.before { background: rgba(220,38,38,0.06); color: var(--red); }
+  .impact-header.after { background: rgba(22,163,74,0.06); color: var(--green); }
+
+  .impact-row {
+    display: contents;
+  }
+  .impact-cell {
+    padding: 1rem 1.2rem; font-size: 0.82rem; line-height: 1.5;
+    border-bottom: 1px solid var(--border);
+  }
+  .impact-cell.step { font-weight: 700; color: var(--text-primary); background: rgba(0,0,0,0.015); font-size: 0.78rem; }
+  .impact-cell.before { color: var(--text-muted); background: rgba(220,38,38,0.02); }
+  .impact-cell.after { color: var(--text-secondary); background: rgba(22,163,74,0.02); }
+  .impact-cell.after strong { color: var(--green); font-weight: 600; }
+  @media (max-width: 768px) {
+    .impact-grid { grid-template-columns: 1fr; }
+    .impact-cell.step { background: rgba(0,0,0,0.04); }
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1rem; margin: 2rem 0;
+  }
+  .roadmap-card {
+    padding: 1.5rem; border-radius: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .roadmap-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .roadmap-card.live::before { background: var(--green); }
+  .roadmap-card.next::before { background: var(--avanade-orange); }
+  .roadmap-card.planned::before { background: var(--text-muted); }
+  .roadmap-card .rm-phase {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;
+  }
+  .roadmap-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .roadmap-card p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; }
+
+  /* ── EVIDENCE QUOTE ── */
+  .evidence-quote {
+    background: #FFF7F2; border-left: 3px solid var(--avanade-orange);
+    padding: 1.25rem 1.5rem; border-radius: 0 8px 8px 0;
+    margin: 2rem 0;
+  }
+  .evidence-quote code {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    color: #C74500; background: rgba(255,88,0,0.08);
+    padding: 0.1rem 0.4rem; border-radius: 3px;
+  }
+  .evidence-quote p {
+    font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* ── FLOWCHART ── */
+  .flowchart-wrap {
+    width: 100%; overflow-x: auto; padding: 1rem 0;
+    display: flex; justify-content: center;
+  }
+  .flowchart-svg {
+    max-width: 1100px; width: 100%; height: auto;
+  }
+  .flowchart-svg text {
+    font-family: 'Inter', sans-serif;
+  }
+  .fc-legend {
+    display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+  .fc-legend-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; color: var(--text-secondary);
+  }
+  .fc-legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  @keyframes dash-flow {
+    to { stroke-dashoffset: -20; }
+  }
+  .flow-line-animated {
+    animation: dash-flow 1.5s linear infinite;
+  }
+
+  /* ── AVANADE SECTION DIVIDER ── */
+  .avanade-divider {
+    position: relative; width: 100%; height: 80px; z-index: 1;
+    overflow: hidden;
+  }
+  .avanade-divider::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -5%; right: -5%;
+    height: 100%;
+    background: linear-gradient(170deg,
+      transparent 0%,
+      transparent 42%,
+      rgba(255,88,0,0.07) 42%,
+      rgba(255,88,0,0.07) 48%,
+      rgba(255,88,0,0.035) 48%,
+      rgba(255,88,0,0.035) 54%,
+      transparent 54%
+    );
+  }
+  .avanade-divider::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--avanade-orange), transparent);
+    border-radius: 1px;
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted); font-size: 0.8rem;
+    position: relative; z-index: 1;
+    background:
+      linear-gradient(155deg, #F5F5F5 0%, #F5F5F5 50%, rgba(255,88,0,0.05) 50%, rgba(255,88,0,0.05) 100%);
+  }
+  footer strong { color: var(--text-secondary); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .pipeline-track { flex-direction: column; align-items: center; }
+    .pipeline-arrow { transform: rotate(90deg); }
+    .pipeline-card { max-width: 100%; border-radius: 12px !important; }
+    .impact-grid { grid-template-columns: 1fr; }
+    .impact-header.before, .impact-header.after { text-align: center; }
+    nav .links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="inner">
+    <div class="logo">
+      <!-- Official Avanade Logo (extracted from avanade.com) -->
+      <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px; width:75px;">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M64.1487 27.819C63.7394 27.9328 63.2731 27.9891 62.7503 27.9891C61.4313 27.9891 60.7718 27.5126 60.7718 26.5595C60.7718 25.5613 61.4993 25.0618 62.955 25.0618C63.5459 25.0618 63.944 25.096 64.1487 25.1641V27.819ZM62.3078 19.6499C61.7392 19.6499 61.1875 19.7009 60.6535 19.803C60.1191 19.9052 59.6925 20.0472 59.3742 20.2285L59.545 21.8282C60.0225 21.6922 60.4487 21.5959 60.824 21.539C61.1993 21.4827 61.5799 21.4538 61.9668 21.4538C63.4219 21.4538 64.1498 22.0102 64.1498 23.1216V23.4961C63.8088 23.428 63.3312 23.3941 62.7174 23.3941C61.4434 23.3941 60.4371 23.6781 59.6984 24.2451C58.9592 24.8125 58.5898 25.5954 58.5898 26.5934C58.5898 28.6357 59.9885 29.6569 62.7854 29.6569C63.9222 29.6569 65.1052 29.4867 66.3329 29.1462V23.2918C66.3329 20.8642 64.9908 19.6499 62.3078 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M74.777 23.8028C74.777 22.9408 74.6117 22.3449 74.2823 22.0158C73.9524 21.6873 73.3667 21.5224 72.5257 21.5224C72.3209 21.5224 72.0764 21.5451 71.7922 21.5903C71.5076 21.6362 71.2407 21.6925 70.9905 21.7604V29.4189H68.7734V20.365C69.3414 20.1385 69.9897 19.9625 70.7177 19.8374C71.4452 19.713 72.1504 19.6504 72.8327 19.6504C75.6068 19.6504 76.994 20.8984 76.994 23.3943V29.4189H74.777V23.8028Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M84.2928 27.819C83.8835 27.9328 83.4171 27.9891 82.8943 27.9891C81.5751 27.9891 80.9161 27.5126 80.9161 26.5595C80.9161 25.5613 81.6434 25.0618 83.0991 25.0618C83.6899 25.0618 84.088 25.096 84.2928 25.1641V27.819ZM82.4524 19.6499C81.8837 19.6499 81.332 19.7009 80.798 19.803C80.2636 19.9052 79.837 20.0472 79.5188 20.2285L79.6895 21.8282C80.1671 21.6922 80.5933 21.5959 80.9686 21.539C81.3438 21.4827 81.7244 21.4538 82.1113 21.4538C83.5664 21.4538 84.2944 22.0102 84.2944 23.1216V23.4961C83.9533 23.428 83.4757 23.3941 82.8619 23.3941C81.5879 23.3941 80.5819 23.6781 79.8431 24.2451C79.1037 24.8125 78.7344 25.5954 78.7344 26.5934C78.7344 28.6357 80.133 29.6569 82.9299 29.6569C84.067 29.6569 85.2497 29.4867 86.4774 29.1462V23.2918C86.4774 20.8642 85.1354 19.6499 82.4524 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M94.7312 27.6828C94.4806 27.7737 94.0261 27.819 93.3668 27.819C91.479 27.819 90.5357 26.7866 90.5357 24.7215C90.5357 23.678 90.7798 22.8723 91.2689 22.3049C91.7577 21.7379 92.4459 21.4539 93.3326 21.4539C93.8786 21.4539 94.3443 21.5336 94.7312 21.6922V27.6828ZM94.7321 16.2124V19.8543C94.3228 19.7183 93.7882 19.6502 93.1289 19.6502C91.6732 19.6502 90.4907 20.1212 89.5812 21.0627C88.6715 22.0044 88.2168 23.2358 88.2168 24.7558C88.2168 26.3442 88.6605 27.5585 89.5472 28.3977C90.4341 29.2373 91.7302 29.6569 93.4357 29.6569C94.5045 29.6569 95.6756 29.4868 96.9492 29.1465V16.2124H94.7321Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M101.008 23.6663C101.077 22.9403 101.298 22.3729 101.673 21.9645C102.049 21.5561 102.531 21.3517 103.123 21.3517C103.714 21.3517 104.192 21.5561 104.556 21.9645C104.919 22.3729 105.101 22.9403 105.101 23.6663H101.008ZM107.25 24.1428C107.25 22.759 106.886 21.6638 106.159 20.8581C105.431 20.0531 104.441 19.6499 103.191 19.6499C101.827 19.6499 100.74 20.1041 99.9335 21.0114C99.126 21.9191 98.7227 23.1558 98.7227 24.7214C98.7227 26.2872 99.1544 27.5013 100.019 28.3635C100.883 29.2261 102.111 29.6569 103.703 29.6569C104.748 29.6569 105.738 29.4749 106.67 29.1122L106.431 27.4444C105.635 27.7166 104.782 27.8528 103.873 27.8528C102.008 27.8528 101.053 27.0136 101.008 25.3341H107.25V24.1428Z" fill="#FF5800"/>
+        <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#paint0_nav)"/>
+        <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#paint1_nav)"/>
+        <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#paint2_nav)"/>
+        <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#paint3_nav)"/>
+        <defs>
+          <linearGradient id="paint0_nav" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.2422" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.3963" stop-color="#FFB414"/><stop offset="0.4725" stop-color="#FFB414"/><stop offset="0.5476" stop-color="#FFB414"/><stop offset="0.62" stop-color="#FFB414"/><stop offset="0.6597" stop-color="#FFB414"/><stop offset="0.7244" stop-color="#FFB414"/><stop offset="0.8061" stop-color="#FF5800"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="paint1_nav" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.1898" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.4034" stop-color="#FFB414"/><stop offset="0.47" stop-color="#FFB414"/><stop offset="0.5314" stop-color="#FFB414"/><stop offset="0.6235" stop-color="#FFB414"/><stop offset="0.7342" stop-color="#FF5800"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="paint2_nav" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A" stop-opacity="0.99"/><stop offset="0.7559" stop-color="#CE056A"/><stop offset="0.8091" stop-color="#CE056A" stop-opacity="0.9955"/><stop offset="0.8494" stop-color="#CE056A" stop-opacity="0.9968"/><stop offset="0.8833" stop-color="#CE056A" stop-opacity="0.9978"/><stop offset="0.9131" stop-color="#FF5800" stop-opacity="0.9988"/><stop offset="0.9397" stop-color="#FF5800" stop-opacity="0.9997"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="paint3_nav" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.0624571" stop-color="#FF5800"/><stop offset="0.1272" stop-color="#FF5800"/><stop offset="0.1929" stop-color="#DC4600"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.3" stop-color="#C80000"/><stop offset="0.48" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">|&ensp;D365FO AI Agents</span>
+    </div>
+    <div class="links">
+      <a href="#problem">Challenge</a>
+      <a href="#knowledge">Knowledge</a>
+      <a href="#flowchart">Architecture</a>
+      <a href="#steps">Steps</a>
+      <a href="#learning">Learning</a>
+      <a href="#impact">Impact</a>
+      <div class="nav-dropdown">
+        <a href="#">Detailed Plan</a>
+        <div class="nav-dropdown-menu">
+          <a href="detailed-plan.html"><span class="dd-dot" style="background:#FF5800;border-radius:50%;"></span>Full Implementation Plan</a>
+          <a href="step-1-fdd.html"><span class="dd-dot" style="background:#FF5800;"></span>Step 1 — FDD Agent</a>
+          <a href="step-2-tdd.html"><span class="dd-dot" style="background:#0078D4;"></span>Step 2 — TDD Agent</a>
+          <a href="step-3-xpp.html"><span class="dd-dot" style="background:#107C10;"></span>Step 3 — X++ Agent</a>
+          <a href="step-4-cr.html"><span class="dd-dot" style="background:#5C2D91;"></span>Step 4 — Code Review</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="top">
+  <div class="container">
+    <div class="badge reveal"><span class="dot"></span> Step 1 — Ready for testing</div>
+    <h1 class="reveal reveal-delay-1">
+      AI-Driven Delivery<br>for <span class="gradient">D365 Finance & Operations</span>
+    </h1>
+    <p class="subtitle reveal reveal-delay-2">
+      A reusable framework that accelerates, standardizes, and embeds quality into every step of D365FO implementation — from functional design through code review — using <strong>4 specialized AI agents</strong> powered by GitHub Copilot Agent Mode.
+    </p>
+
+    <div class="pipeline-track reveal reveal-delay-3">
+      <div class="pipeline-card">
+        <div class="phase-num">Step 1</div>
+        <h3>FDD Generator</h3>
+        <div class="role">Functional Consultant + Agent</div>
+        <div style="margin-bottom:0.75rem"><span class="status-live green">● Ready</span></div>
+        <div class="io">
+          <span>In:</span> Work Item (DevOps)<br>
+          <span>Out:</span> FDD attached to DevOps
+        </div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-card">
+        <div class="phase-num">Step 2</div>
+        <h3>TDD Generator</h3>
+        <div class="role">Developer + Agent</div>
+        <div style="margin-bottom:0.75rem"><span class="status-live amber">◌ Next</span></div>
+        <div class="io">
+          <span>In:</span> FDD (DevOps)<br>
+          <span>Out:</span> TDD + Execution Prompt
+        </div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-card">
+        <div class="phase-num">Step 3</div>
+        <h3>X++ Generator</h3>
+        <div class="role">Developer + Agent</div>
+        <div style="margin-bottom:0.75rem"><span class="status-live amber">◌ Planned</span></div>
+        <div class="io">
+          <span>In:</span> Execution Prompt (DevOps)<br>
+          <span>Out:</span> X++ code in local model
+        </div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-card">
+        <div class="phase-num">Step 4</div>
+        <h3>Code Review</h3>
+        <div class="role">Tech Lead + Agent</div>
+        <div style="margin-bottom:0.75rem"><span class="status-live amber">◌ Planned</span></div>
+        <div class="io">
+          <span>In:</span> Pull Request (GitHub)<br>
+          <span>Out:</span> Review comments on PR
+        </div>
+      </div>
+    </div>
+    <p class="reveal reveal-delay-4" style="color:var(--text-muted); font-size:0.85rem; margin-top:1rem;">
+      <strong style="color:var(--text-secondary)">Human-in-the-loop</strong> — the agent executes,the professional decides, and validates.
+    </p>
+  </div>
+</section>
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ PROBLEM ═══ -->
+<section class="problem-section" id="problem">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-label reveal">The Challenge</div>
+      <h2 class="section-title reveal reveal-delay-1">Reshaping D365FO delivery<br>for the AI era</h2>
+      <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 2rem;">
+        The market is changing fast. Our competitors are already building AI-powered delivery Agents for ERP projects. If we do not act now, we lose ground on cost, speed, and how we use our talent. We need to give our teams AI tools that are <strong style="color:var(--text-primary)">transparent, tunable, and measurably faster</strong> — not as a future experiment, but as a real delivery advantage today.
+      </p>
+    </div>
+
+    <div class="challenge-grid reveal reveal-delay-3">
+      <div class="challenge-card">
+        <div class="ch-icon">⚡</div>
+        <h4>Cost-effective at scale</h4>
+        <p>Every hour we spend writing FDDs, TDDs, X++ code, and review reports by hand is an hour our competitors save with AI. We need to <strong>deliver more with the same team size</strong> — turning senior knowledge into a multiplier, not a bottleneck.</p>
+        <div class="ch-roles">
+          <span class="ch-role">Consultants</span>
+          <span class="ch-role">Developers</span>
+          <span class="ch-role">Tech Leads</span>
+        </div>
+      </div>
+
+      <div class="challenge-card">
+        <div class="ch-icon">🔍</div>
+        <h4>Transparent, not a black box</h4>
+        <p>AI tools that produce results no one can explain will be rejected — by our teams and by our clients. Every decision the agent makes must be <strong>traceable to a real source.</strong> Trust comes from evidence.</p>
+        <div class="ch-roles">
+          <span class="ch-role">Tech Leads</span>
+          <span class="ch-role">Architects</span>
+          <span class="ch-role">Clients</span>
+        </div>
+      </div>
+
+      <div class="challenge-card">
+        <div class="ch-icon">🎛️</div>
+        <h4>Tunable by the delivery team</h4>
+        <p>No two D365FO projects are the same. Consultants shape FDD templates, developers control naming conventions and code patterns, tech leads define review rules. All of this is done through <strong>Git-versioned configuration files</strong> — no one needs to change agent code. The team owns the rules; the agents follow them.</p>
+        <div class="ch-roles">
+          <span class="ch-role">Manifesto</span>
+          <span class="ch-role">Playbooks</span>
+          <span class="ch-role">Templates</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <p class="reveal reveal-delay-4" style="color:var(--text-secondary); font-size:1.05rem; max-width:700px; margin:2rem auto 2.5rem; line-height:1.7;">
+        The answer: <strong style="color:var(--text-primary)">specialized AI agents</strong> — connected to the real D365FO codebase, tuned by each project team, and delivering at a pace that keeps us ahead of the competition.
+      </p>
+
+      <div class="principle-strip reveal reveal-delay-4">
+        <div class="principle-item">
+          <div class="pr-icon">👤</div>
+          <h5>Human-in-the-loop</h5>
+          <p>Every output is reviewed and approved before it moves to the next step</p>
+        </div>
+        <div class="principle-item">
+          <div class="pr-icon">📎</div>
+          <h5>Evidence-based</h5>
+          <p>Agents cite MS Learn, Ninja MCP, and Playbook sources for every decision</p>
+        </div>
+        <div class="principle-item">
+          <div class="pr-icon">⚙️</div>
+          <h5>Project-tunable</h5>
+          <p>Manifesto, Playbooks, and Templates are Git-versioned and owned by the team</p>
+        </div>
+        <div class="principle-item">
+          <div class="pr-icon">🏎️</div>
+          <h5>Competitively faster</h5>
+          <p>Measurable acceleration across all four delivery Steps compared to manual work</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ KNOWLEDGE SOURCES ═══ -->
+<section id="knowledge" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label reveal">Knowledge Architecture</div>
+    <h2 class="section-title reveal reveal-delay-1">Agents grounded in real&nbsp;code,<br>not guesswork</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Every design decision is backed by evidence from production-grade knowledge sources via the Model Context Protocol (MCP).
+    </p>
+    <div class="knowledge-grid">
+      <div class="k-card reveal">
+        <div class="k-icon" style="background:var(--cyan-glow); color:var(--cyan);">N</div>
+        <h4>Ninja MCP Server</h4>
+        <p>584,000+ AOT objects indexed — standard, ISV, and custom layers. Hybrid mode: Azure DB/Blob (remote) + local file search (dev machine). Nightly sync via build pipeline.</p>
+        <span class="k-tag">Steps 2 &amp; 3</span>
+      </div>
+      <div class="k-card reveal reveal-delay-1">
+        <div class="k-icon" style="background:var(--accent-glow); color:var(--accent-light);">M</div>
+        <h4>MS Learn MCP</h4>
+        <p>Official Microsoft documentation and extensibility best practices. Used to classify Standard vs. Config vs. GAP and validate design decisions.</p>
+        <span class="k-tag">All Steps</span>
+      </div>
+      <div class="k-card reveal reveal-delay-2">
+        <div class="k-icon" style="background:var(--green-glow); color:var(--green);">D</div>
+        <h4>Azure DevOps MCP</h4>
+        <p>Reads work items, comments, and attachments. Creates sub-tasks, uploads documents (FDD, TDD, Execution Prompt), and mentions stakeholders.</p>
+        <span class="k-tag">Steps 1, 2 &amp; 3</span>
+      </div>
+      <div class="k-card reveal reveal-delay-3">
+        <div class="k-icon" style="background:var(--amber-glow); color:var(--amber);">F</div>
+        <h4>D365FO MCP Server (MS)</h4>
+        <p>Official Microsoft server returning standard form layouts. Enables automated mockup generation with custom fields and controls overlaid.</p>
+        <span class="k-tag">Step 1 (upcoming)</span>
+      </div>
+    </div>
+    <div class="evidence-quote reveal" style="margin-top:2rem;">
+      <p>Every design decision cites its evidence trail — e.g.:<br>
+      <em>"Chain of Command on <code>SalesTable.validateWrite()</code> — based on: <code>recommend_extension_strategy</code> + <code>analyze_extension_points</code> + <code>find_coc_extensions</code> confirming no existing wrapper."</em></p>
+    </div>
+  </div>
+</section>
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ ARCHITECTURE FLOWCHART ═══ -->
+<section id="flowchart">
+  <div class="container">
+    <div class="section-label reveal" style="text-align:center;">System Architecture</div>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">End-to-End Integration Map</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 2rem; text-align:center;">
+      Every connection point between cloud services, on-premise resources, human actors, and AI agents — in a single view.
+    </p>
+
+    <div class="flowchart-wrap reveal reveal-delay-3">
+      <svg class="flowchart-svg" viewBox="0 0 1010 960" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Step 1 FDD — Avanade Orange -->
+          <filter id="glow-p1" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#FF5800" flood-opacity="0.14"/>
+          </filter>
+          <!-- Step 2 TDD — Azure Blue -->
+          <filter id="glow-p2" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#0078D4" flood-opacity="0.14"/>
+          </filter>
+          <!-- Step 3 X++ — Green -->
+          <filter id="glow-p3" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#107C10" flood-opacity="0.14"/>
+          </filter>
+          <!-- Step 4 CR — Purple -->
+          <filter id="glow-p4" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#5C2D91" flood-opacity="0.14"/>
+          </filter>
+          <!-- Cloud tier -->
+          <filter id="glow-cloud" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#0078D4" flood-opacity="0.10"/>
+          </filter>
+          <!-- MCP tier -->
+          <filter id="glow-mcp" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#FF5800" flood-opacity="0.10"/>
+          </filter>
+          <!-- STEP arrow markers -->
+          <marker id="arr-p1" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF5800" opacity="0.8"/></marker>
+          <marker id="arr-p2" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#0078D4" opacity="0.8"/></marker>
+          <marker id="arr-p3" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#107C10" opacity="0.8"/></marker>
+          <marker id="arr-p4" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#5C2D91" opacity="0.8"/></marker>
+          <!-- Neutral / infrastructure markers -->
+          <marker id="arr-cloud" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#0078D4" opacity="0.6"/></marker>
+          <marker id="arr-mcp" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF5800" opacity="0.6"/></marker>
+        </defs>
+
+        <!-- ═══════ TIER 1: CLOUD / INFRASTRUCTURE PLATFORMS ═══════ -->
+        <rect x="20" y="12" width="983" height="130" rx="16" fill="rgba(0,120,212,0.04)" stroke="rgba(0,120,212,0.18)" stroke-width="1.5"/>
+        <text x="43" y="36" fill="#0078D4" font-size="11" font-weight="700" letter-spacing="0.1em">☁ AZURE / CLOUD SYSTEM</text>
+
+        <!-- Azure DevOps -->
+        <rect x="33" y="48" rx="10" width="175" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.3)" stroke-width="1.5" filter="url(#glow-cloud)"/>
+        <text x="52" y="73" fill="#0078D4" font-size="16">⚡</text>
+        <text x="72" y="74" fill="#1A1A1A" font-size="11" font-weight="700">Azure DevOps</text>
+        <text x="48" y="92" fill="#999999" font-size="8.5">Work Items · Repos · Pipelines</text>
+        <text x="48" y="106" fill="#999999" font-size="8.5">Boards · Git branches</text>
+        <rect x="48" y="114" rx="3" width="52" height="12" fill="rgba(0,120,212,0.1)"/>
+        <text x="55" y="123" fill="#0078D4" font-size="7" font-weight="600">PLATFORM</text>
+
+        <!-- Azure Blob / Files -->
+        <rect x="222" y="48" rx="10" width="175" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.3)" stroke-width="1.5" filter="url(#glow-cloud)"/>
+        <text x="241" y="73" fill="#0078D4" font-size="16">☁</text>
+        <text x="261" y="74" fill="#1A1A1A" font-size="11" font-weight="700">Azure Blob / Files</text>
+        <text x="237" y="92" fill="#999999" font-size="8.5">584K+ AOT object metadata</text>
+        <text x="237" y="106" fill="#999999" font-size="8.5">Standard + ISV source code</text>
+        <rect x="237" y="114" rx="3" width="52" height="12" fill="rgba(0,120,212,0.1)"/>
+        <text x="244" y="123" fill="#0078D4" font-size="7" font-weight="600">STORAGE</text>
+
+        <!-- Nightly Build Pipeline -->
+        <rect x="411" y="48" rx="10" width="175" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.2)" stroke-width="1.5"/>
+        <text x="430" y="73" fill="#0078D4" font-size="16">🔄</text>
+        <text x="450" y="74" fill="#1A1A1A" font-size="11" font-weight="700">Nightly Build</text>
+        <text x="426" y="92" fill="#999999" font-size="8.5">Indexes AOT · Updates DB/Blob</text>
+        <text x="426" y="106" fill="#999999" font-size="8.5">Syncs Ninja MCP data nightly</text>
+        <rect x="426" y="114" rx="3" width="58" height="12" fill="rgba(0,120,212,0.1)"/>
+        <text x="433" y="123" fill="#0078D4" font-size="7" font-weight="600">PIPELINE</text>
+
+        <!-- Internal arrow: Nightly Build → Azure Blob -->
+        <line x1="411" y1="89" x2="401" y2="89" stroke="#0078D4" stroke-width="1.5" marker-end="url(#arr-cloud)" opacity="0.6"/>
+
+        <!-- MS Learn -->
+        <rect x="600" y="48" rx="10" width="130" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.25)" stroke-width="1.5" filter="url(#glow-cloud)"/>
+        <text x="616" y="73" fill="#0078D4" font-size="16">📚</text>
+        <text x="636" y="74" fill="#1A1A1A" font-size="11" font-weight="700">MS Learn</text>
+        <text x="615" y="92" fill="#999999" font-size="8.5">Official docs</text>
+        <text x="615" y="106" fill="#999999" font-size="8.5">Best practices</text>
+        <rect x="615" y="114" rx="3" width="62" height="12" fill="rgba(0,120,212,0.1)"/>
+        <text x="620" y="123" fill="#0078D4" font-size="7" font-weight="600">DOCS SITE</text>
+
+        <!-- D365 FO Tier2 -->
+        <rect x="744" y="48" rx="10" width="125" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.25)" stroke-width="1.5" filter="url(#glow-cloud)"/>
+        <text x="760" y="73" fill="#0078D4" font-size="16">🏢</text>
+        <text x="780" y="74" fill="#1A1A1A" font-size="11" font-weight="700">D365 FO Tier2</text>
+        <text x="759" y="92" fill="#999999" font-size="8.5">Form layouts</text>
+        <text x="759" y="106" fill="#999999" font-size="8.5">Standard config</text>
+        <rect x="759" y="114" rx="3" width="75" height="12" fill="rgba(0,120,212,0.1)"/>
+        <text x="764" y="123" fill="#0078D4" font-size="7" font-weight="600">ENVIRONMENT</text>
+
+        <!-- GitHub -->
+        <rect x="883" y="48" rx="10" width="110" height="82" fill="#FFFFFF" stroke="rgba(0,120,212,0.2)" stroke-width="1.5"/>
+        <text x="899" y="73" fill="#1A1A1A" font-size="16">🐙</text>
+        <text x="919" y="74" fill="#1A1A1A" font-size="11" font-weight="700">GitHub</text>
+        <text x="898" y="92" fill="#999999" font-size="8.5">PRs · Repos</text>
+        <text x="898" y="106" fill="#999999" font-size="8.5">Code reviews</text>
+        <rect x="898" y="114" rx="3" width="52" height="12" fill="rgba(0,120,212,0.08)"/>
+        <text x="905" y="123" fill="#0078D4" font-size="7" font-weight="600">PLATFORM</text>
+
+        <!-- ═══════ TIER 2: MCP SERVERS (one layer below cloud) ═══════ -->
+        <rect x="20" y="158" width="983" height="130" rx="16" fill="rgba(255,88,0,0.04)" stroke="rgba(255,88,0,0.18)" stroke-width="1.2"/>
+        <text x="43" y="180" fill="#FF5800" font-size="11" font-weight="700" letter-spacing="0.1em">🔌 MCP SERVERS</text>
+
+        <!-- Azure DevOps MCP -->
+        <rect x="33" y="192" rx="10" width="175" height="82" fill="#FFFFFF" stroke="rgba(255,88,0,0.3)" stroke-width="1.5" filter="url(#glow-mcp)"/>
+        <text x="52" y="215" fill="#FF5800" font-size="14">⚡</text>
+        <text x="70" y="216" fill="#1A1A1A" font-size="10.5" font-weight="700">Azure DevOps MCP</text>
+        <text x="48" y="232" fill="#999999" font-size="8.5">Work Items &amp; Comments</text>
+        <text x="48" y="246" fill="#999999" font-size="8.5">FDD/TDD attach · Exec Prompt</text>
+        <rect x="48" y="256" rx="3" width="100" height="12" fill="rgba(255,88,0,0.12)"/>
+        <text x="56" y="265" fill="#FF5800" font-size="7" font-weight="600">Steps 1, 2, 3</text>
+
+        <!-- Ninja MCP Server -->
+        <rect x="222" y="192" rx="10" width="175" height="82" fill="#FFFFFF" stroke="rgba(255,88,0,0.3)" stroke-width="1.5" filter="url(#glow-mcp)"/>
+        <text x="241" y="215" fill="#FF5800" font-size="14">⚔</text>
+        <text x="259" y="216" fill="#1A1A1A" font-size="10.5" font-weight="700">Ninja MCP Server</text>
+        <text x="237" y="232" fill="#999999" font-size="8.5">54 tools for AOT operations</text>
+        <text x="237" y="246" fill="#999999" font-size="8.5">Fed by nightly build pipeline</text>
+        <rect x="237" y="256" rx="3" width="100" height="12" fill="rgba(255,88,0,0.12)"/>
+        <text x="245" y="265" fill="#FF5800" font-size="7" font-weight="600">Steps 2 &amp; 3</text>
+
+        <!-- MS Learn MCP -->
+        <rect x="600" y="192" rx="10" width="130" height="82" fill="#FFFFFF" stroke="rgba(255,88,0,0.25)" stroke-width="1.5" filter="url(#glow-mcp)"/>
+        <text x="616" y="215" fill="#FF5800" font-size="14">📚</text>
+        <text x="634" y="216" fill="#1A1A1A" font-size="10.5" font-weight="700">MS Learn MCP</text>
+        <text x="615" y="232" fill="#999999" font-size="8.5">Extensibility patterns</text>
+        <text x="615" y="246" fill="#999999" font-size="8.5">Official documentation</text>
+        <rect x="615" y="256" rx="3" width="75" height="12" fill="rgba(255,88,0,0.12)"/>
+        <text x="621" y="265" fill="#FF5800" font-size="7" font-weight="600">All Steps</text>
+
+        <!-- D365FO MCP -->
+        <rect x="744" y="192" rx="10" width="125" height="82" fill="#FFFFFF" stroke="rgba(255,88,0,0.25)" stroke-width="1.5" filter="url(#glow-mcp)"/>
+        <text x="760" y="215" fill="#FF5800" font-size="14">🏢</text>
+        <text x="778" y="216" fill="#1A1A1A" font-size="10.5" font-weight="700">D365FO MCP</text>
+        <text x="759" y="232" fill="#999999" font-size="8.5">Form layouts</text>
+        <text x="759" y="246" fill="#999999" font-size="8.5">Automated mockups</text>
+        <rect x="759" y="256" rx="3" width="98" height="12" fill="rgba(255,88,0,0.12)"/>
+        <text x="764" y="265" fill="#FF5800" font-size="7" font-weight="600">Step 1 (upcoming)</text>
+
+        <!-- GitHub MCP -->
+        <rect x="883" y="192" rx="10" width="110" height="82" fill="#FFFFFF" stroke="rgba(92,45,145,0.25)" stroke-width="1.5" filter="url(#glow-p4)"/>
+        <text x="899" y="215" fill="#5C2D91" font-size="14">🐙</text>
+        <text x="917" y="216" fill="#1A1A1A" font-size="10.5" font-weight="700">GitHub MCP</text>
+        <text x="898" y="232" fill="#999999" font-size="8.5">PR diff analysis</text>
+        <text x="898" y="246" fill="#999999" font-size="8.5">Review comments</text>
+        <rect x="898" y="256" rx="3" width="60" height="12" fill="rgba(92,45,145,0.1)"/>
+        <text x="905" y="265" fill="#5C2D91" font-size="7" font-weight="600">Step 4</text>
+
+        <!-- ── Cloud → MCP vertical connections ── -->
+        <line x1="120" y1="130" x2="120" y2="192" stroke="#0078D4" stroke-width="1.3" stroke-dasharray="4 3" class="flow-line-animated" marker-end="url(#arr-cloud)" opacity="0.5"/>
+        <line x1="310" y1="130" x2="310" y2="192" stroke="#0078D4" stroke-width="1.3" stroke-dasharray="4 3" class="flow-line-animated" marker-end="url(#arr-cloud)" opacity="0.5"/>
+        <line x1="665" y1="130" x2="665" y2="192" stroke="#0078D4" stroke-width="1.3" stroke-dasharray="4 3" class="flow-line-animated" marker-end="url(#arr-mcp)" opacity="0.5"/>
+        <line x1="806" y1="130" x2="806" y2="192" stroke="#0078D4" stroke-width="1.3" stroke-dasharray="4 3" class="flow-line-animated" marker-end="url(#arr-mcp)" opacity="0.5"/>
+        <line x1="938" y1="130" x2="938" y2="192" stroke="#5C2D91" stroke-width="1.3" stroke-dasharray="4 3" class="flow-line-animated" marker-end="url(#arr-p4)" opacity="0.5"/>
+        <!-- Nightly Build → Azure Blob (horizontal in cloud tier) -->
+        <!-- Already has the arrow above -->
+
+        <!-- ═══════ TIER 3: AI AGENTS (merged with Humans) ═══════ -->
+        <rect x="20" y="306" width="983" height="168" rx="16" fill="rgba(0,0,0,0.015)" stroke="rgba(0,0,0,0.08)" stroke-dasharray="6 4"/>
+        <text x="43" y="328" fill="#555555" font-size="11" font-weight="700" letter-spacing="0.1em">🤖 AI AGENTS — GitHub Copilot Agent Mode  ·  👤 Each merged with its Human operator</text>
+
+        <!-- ────── MERGED: Consultant + FDD Agent (Step 1 — Orange) ────── -->
+        <rect x="33" y="340" rx="10" width="215" height="120" fill="#FFFFFF" stroke-width="2" filter="url(#glow-p1)"/>
+        <rect x="33" y="340" rx="10" width="215" height="120" fill="none" stroke="rgba(255,88,0,0.5)" stroke-width="2" stroke-dasharray="8 4"/>
+        <rect x="33" y="340" rx="10" width="215" height="120" fill="none" stroke="rgba(255,88,0,0.25)" stroke-width="2" stroke-dasharray="0 8 8 0"/>
+        <text x="52" y="362" fill="#FF5800" font-size="15">👤</text>
+        <text x="71" y="362" fill="#FF5800" font-size="10.5" font-weight="700">Consultant</text>
+        <text x="149" y="362" fill="#999999" font-size="10">+</text>
+        <text x="162" y="362" fill="#1A1A1A" font-size="10.5" font-weight="700">FDD Agent</text>
+        <circle cx="52" cy="380" r="9" fill="rgba(255,88,0,0.15)" stroke="#FF5800" stroke-width="1"/>
+        <text x="48" y="384" fill="#FF5800" font-size="10" font-weight="700">1</text>
+        <text x="67" y="384" fill="#999999" font-size="8.5">Classify Std / Config / GAP</text>
+        <text x="48" y="400" fill="#999999" font-size="8.5">Co-authoring · Reviews FDD</text>
+        <line x1="48" y1="410" x2="233" y2="410" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+        <text x="48" y="424" fill="#999999" font-size="7.5" font-weight="600">IN: Work Item → OUT: FDD</text>
+        <rect x="48" y="434" rx="3" width="56" height="14" fill="rgba(255,88,0,0.1)"/>
+        <text x="55" y="444" fill="#FF5800" font-size="7.5" font-weight="600">👤 + 🤖</text>
+
+        <!-- ────── MERGED: Developer + TDD Agent (Step 2 — Blue) ────── -->
+        <rect x="273" y="340" rx="10" width="225" height="120" fill="#FFFFFF" stroke-width="2" filter="url(#glow-p2)"/>
+        <rect x="273" y="340" rx="10" width="225" height="120" fill="none" stroke="rgba(0,120,212,0.5)" stroke-width="2" stroke-dasharray="8 4"/>
+        <rect x="273" y="340" rx="10" width="225" height="120" fill="none" stroke="rgba(0,120,212,0.25)" stroke-width="2" stroke-dasharray="0 8 8 0"/>
+        <text x="292" y="362" fill="#0078D4" font-size="15">👨‍💻</text>
+        <text x="311" y="362" fill="#0078D4" font-size="10.5" font-weight="700">Developer</text>
+        <text x="383" y="362" fill="#999999" font-size="10">+</text>
+        <text x="396" y="362" fill="#1A1A1A" font-size="10.5" font-weight="700">TDD Agent</text>
+        <circle cx="292" cy="380" r="9" fill="rgba(0,120,212,0.15)" stroke="#0078D4" stroke-width="1"/>
+        <text x="288" y="384" fill="#0078D4" font-size="10" font-weight="700">2</text>
+        <text x="307" y="384" fill="#999999" font-size="8.5">Evidence-based design</text>
+        <text x="288" y="400" fill="#999999" font-size="8.5">Reviews TDD · Ninja MCP evidence</text>
+        <line x1="288" y1="410" x2="483" y2="410" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+        <text x="288" y="424" fill="#999999" font-size="7.5" font-weight="600">IN: FDD → OUT: TDD + Exec Prompt</text>
+        <rect x="288" y="434" rx="3" width="56" height="14" fill="rgba(0,120,212,0.1)"/>
+        <text x="295" y="444" fill="#0078D4" font-size="7.5" font-weight="600">👨‍💻 + 🤖</text>
+
+        <!-- ────── MERGED: Developer + X++ Agent (Step 3 — Green) ────── -->
+        <rect x="523" y="340" rx="10" width="225" height="120" fill="#FFFFFF" stroke-width="2" filter="url(#glow-p3)"/>
+        <rect x="523" y="340" rx="10" width="225" height="120" fill="none" stroke="rgba(16,124,16,0.5)" stroke-width="2" stroke-dasharray="8 4"/>
+        <rect x="523" y="340" rx="10" width="225" height="120" fill="none" stroke="rgba(16,124,16,0.25)" stroke-width="2" stroke-dasharray="0 8 8 0"/>
+        <text x="542" y="362" fill="#107C10" font-size="15">👨‍💻</text>
+        <text x="561" y="362" fill="#107C10" font-size="10.5" font-weight="700">Developer</text>
+        <text x="633" y="362" fill="#999999" font-size="10">+</text>
+        <text x="646" y="362" fill="#1A1A1A" font-size="10.5" font-weight="700">X++ Agent</text>
+        <circle cx="542" cy="380" r="9" fill="rgba(16,124,16,0.15)" stroke="#107C10" stroke-width="1"/>
+        <text x="538" y="384" fill="#107C10" font-size="10" font-weight="700">3</text>
+        <text x="557" y="384" fill="#999999" font-size="8.5">Hierarchical gen.</text>
+        <text x="538" y="400" fill="#999999" font-size="8.5">Creates VS Solution · Build + BP loop</text>
+        <line x1="538" y1="410" x2="733" y2="410" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+        <text x="538" y="424" fill="#999999" font-size="7.5" font-weight="600">IN: Exec Prompt → OUT: X++ code</text>
+        <rect x="538" y="434" rx="3" width="56" height="14" fill="rgba(16,124,16,0.1)"/>
+        <text x="545" y="444" fill="#107C10" font-size="7.5" font-weight="600">👨‍💻 + 🤖</text>
+
+        <!-- ────── MERGED: Tech Lead + Code Review Agent (Step 4 — Purple) ────── -->
+        <rect x="773" y="340" rx="10" width="218" height="120" fill="#FFFFFF" stroke-width="2" filter="url(#glow-p4)"/>
+        <rect x="773" y="340" rx="10" width="218" height="120" fill="none" stroke="rgba(92,45,145,0.5)" stroke-width="2" stroke-dasharray="8 4"/>
+        <rect x="773" y="340" rx="10" width="218" height="120" fill="none" stroke="rgba(92,45,145,0.25)" stroke-width="2" stroke-dasharray="0 8 8 0"/>
+        <text x="792" y="362" fill="#5C2D91" font-size="15">🛡</text>
+        <text x="811" y="362" fill="#5C2D91" font-size="10.5" font-weight="700">Tech Lead</text>
+        <text x="877" y="362" fill="#999999" font-size="10">+</text>
+        <text x="890" y="362" fill="#1A1A1A" font-size="10.5" font-weight="700">CR Agent</text>
+        <circle cx="792" cy="380" r="9" fill="rgba(92,45,145,0.15)" stroke="#5C2D91" stroke-width="1"/>
+        <text x="788" y="384" fill="#5C2D91" font-size="10" font-weight="700">4</text>
+        <text x="807" y="384" fill="#999999" font-size="8.5">PR diff · naming · security · perf</text>
+        <text x="788" y="400" fill="#999999" font-size="8.5">Approval · Approves Playbook PRs</text>
+        <line x1="788" y1="410" x2="976" y2="410" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+        <text x="788" y="424" fill="#999999" font-size="7.5" font-weight="600">IN: PR → OUT: Review + Lessons Learned</text>
+        <rect x="788" y="434" rx="3" width="56" height="14" fill="rgba(92,45,145,0.1)"/>
+        <text x="795" y="444" fill="#5C2D91" font-size="7.5" font-weight="600">🛡 + 🤖</text>
+
+        <!-- Agent flow arrows (colored by target step) -->
+        <line x1="248" y1="400" x2="273" y2="400" stroke="#0078D4" stroke-width="1.8" marker-end="url(#arr-p2)" opacity="0.7"/>
+        <line x1="498" y1="400" x2="523" y2="400" stroke="#107C10" stroke-width="1.8" marker-end="url(#arr-p3)" opacity="0.7"/>
+        <line x1="748" y1="400" x2="773" y2="400" stroke="#5C2D91" stroke-width="1.8" marker-end="url(#arr-p4)" opacity="0.7"/>
+
+        <!-- ═══════ MCP → AGENT CONNECTION LINES ═══════ -->
+
+        <!-- Azure DevOps MCP → FDD (Step 1 orange) -->
+        <line x1="120" y1="274" x2="120" y2="340" stroke="#FF5800" stroke-width="1.3" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p1)"/>
+        <!-- Azure DevOps MCP → TDD (Step 2 blue) -->
+        <path d="M 160 274 L 160 300 L 350 300 L 350 340" fill="none" stroke="#0078D4" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.5" marker-end="url(#arr-p2)"/>
+        <!-- Azure DevOps MCP → X++ (Step 3 green) -->
+        <path d="M 190 274 L 190 296 L 600 296 L 600 340" fill="none" stroke="#107C10" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.4" marker-end="url(#arr-p3)"/>
+
+        <!-- Ninja MCP → TDD (Step 2 blue) & X++ (Step 3 green) -->
+        <line x1="290" y1="274" x2="360" y2="340" stroke="#0078D4" stroke-width="1.5" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p2)"/>
+        <line x1="350" y1="274" x2="620" y2="340" stroke="#107C10" stroke-width="1.5" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p3)"/>
+
+        <!-- MS Learn MCP → all agents (colored by target) -->
+        <path d="M 600 233 L 135 296 L 135 340" fill="none" stroke="#FF5800" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.35" marker-end="url(#arr-p1)"/>
+        <path d="M 600 243 L 385 300 L 385 340" fill="none" stroke="#0078D4" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.35" marker-end="url(#arr-p2)"/>
+        <path d="M 665 274 L 635 300 L 635 340" fill="none" stroke="#107C10" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.3" marker-end="url(#arr-p3)"/>
+        <path d="M 700 274 L 880 300 L 880 340" fill="none" stroke="#5C2D91" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.3" marker-end="url(#arr-p4)"/>
+
+        <!-- D365FO MCP → FDD (Step 1 orange) -->
+        <path d="M 744 243 L 215 296 L 165 340" fill="none" stroke="#FF5800" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.35" marker-end="url(#arr-p1)"/>
+
+        <!-- GitHub MCP → Tech Lead + Code Review (Step 4 purple) -->
+        <path d="M 938 274 L 880 340" fill="none" stroke="#5C2D91" stroke-width="1.5" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p4)"/>
+
+        <!-- ═══════ TIER 4: ON-PREMISE (bottom left) ═══════ -->
+        <rect x="20" y="492" width="570" height="140" rx="16" fill="rgba(16,124,16,0.03)" stroke="rgba(16,124,16,0.12)" stroke-dasharray="6 4"/>
+        <text x="43" y="514" fill="#107C10" font-size="11" font-weight="700" letter-spacing="0.1em">🖥 ON-PREMISE / LOCAL DEV MACHINE</text>
+
+        <!-- Ninja MCP Local -->
+        <rect x="33" y="526" rx="10" width="170" height="90" fill="#FFFFFF" stroke="rgba(16,124,16,0.25)" stroke-width="1.5"/>
+        <text x="51" y="550" fill="#107C10" font-size="16">🔍</text>
+        <text x="71" y="551" fill="#1A1A1A" font-size="11" font-weight="700">Ninja Local</text>
+        <text x="48" y="570" fill="#999999" font-size="9">File search on custom model</text>
+        <text x="48" y="584" fill="#999999" font-size="9">(dev machine — real-time)</text>
+        <rect x="48" y="593" rx="3" width="90" height="12" fill="rgba(16,124,16,0.1)"/>
+        <text x="56" y="602" fill="#107C10" font-size="7.5" font-weight="600">Covers 1-day gap</text>
+
+        <!-- VS Solution -->
+        <rect x="217" y="526" rx="10" width="170" height="90" fill="#FFFFFF" stroke="rgba(16,124,16,0.25)" stroke-width="1.5"/>
+        <text x="235" y="550" fill="#107C10" font-size="16">📂</text>
+        <text x="255" y="551" fill="#1A1A1A" font-size="11" font-weight="700">VS Solution</text>
+        <text x="232" y="570" fill="#999999" font-size="9">.sln + .rnrproj files</text>
+        <text x="232" y="584" fill="#999999" font-size="9">Created by dev upfront</text>
+
+        <!-- Manifesto -->
+        <rect x="401" y="526" rx="10" width="170" height="90" fill="#FFFFFF" stroke="rgba(16,124,16,0.25)" stroke-width="1.5"/>
+        <text x="419" y="550" fill="#107C10" font-size="16">📜</text>
+        <text x="439" y="551" fill="#1A1A1A" font-size="11" font-weight="700">Manifesto</text>
+        <text x="416" y="570" fill="#999999" font-size="9">Naming, prefixes, rules</text>
+        <text x="416" y="584" fill="#999999" font-size="9">Detail level config</text>
+
+        <!-- ── Agents → On-Premise (down) ── -->
+        <!-- TDD (Step 2 blue) → Ninja Local -->
+        <path d="M 335 460 L 335 486 L 118 486 L 118 526" fill="none" stroke="#0078D4" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.5" marker-end="url(#arr-p2)"/>
+        <!-- X++ (Step 3 green) → Ninja Local -->
+        <path d="M 575 460 L 575 480 L 145 480 L 145 526" fill="none" stroke="#107C10" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p3)"/>
+        <!-- X++ (Step 3 green) → VS Solution -->
+        <path d="M 605 460 L 605 486 L 302 486 L 302 526" fill="none" stroke="#107C10" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.6" marker-end="url(#arr-p3)"/>
+        <!-- TDD/X++ → Manifesto -->
+        <path d="M 450 460 L 450 486 L 486 486 L 486 526" fill="none" stroke="#0078D4" stroke-width="1" stroke-dasharray="4 3" class="flow-line-animated" opacity="0.5" marker-end="url(#arr-p2)"/>
+
+        <!-- ═══════ TIER 5: GIT (bottom) ═══════ -->
+        <rect x="20" y="650" width="983" height="150" rx="16" fill="rgba(92,45,145,0.03)" stroke="rgba(92,45,145,0.10)" stroke-dasharray="6 4"/>
+        <text x="43" y="674" fill="#5C2D91" font-size="11" font-weight="700" letter-spacing="0.1em">📦 GITHUB — VERSION-CONTROLLED ASSETS</text>
+
+        <!-- Templates -->
+        <rect x="33" y="688" rx="10" width="210" height="95" fill="#FFFFFF" stroke="rgba(92,45,145,0.2)" stroke-width="1.5"/>
+        <text x="51" y="713" fill="#5C2D91" font-size="16">📄</text>
+        <text x="71" y="714" fill="#1A1A1A" font-size="11" font-weight="700">Document Templates</text>
+        <text x="48" y="733" fill="#999999" font-size="9">FDD, TDD, Exec Prompt templates</text>
+        <text x="48" y="747" fill="#999999" font-size="9">Git-versioned, per-agent repo</text>
+        <rect x="48" y="758" rx="3" width="80" height="14" fill="rgba(92,45,145,0.08)"/>
+        <text x="56" y="768" fill="#5C2D91" font-size="8" font-weight="600">All Steps</text>
+
+        <!-- Playbooks -->
+        <rect x="263" y="688" rx="10" width="260" height="95" fill="#FFFFFF" stroke="rgba(92,45,145,0.2)" stroke-width="1.5"/>
+        <text x="281" y="713" fill="#5C2D91" font-size="16">📘</text>
+        <text x="301" y="714" fill="#1A1A1A" font-size="11" font-weight="700">Playbooks (Lessons Learned)</text>
+        <text x="278" y="733" fill="#999999" font-size="9">TDD: extensibility, object mapping</text>
+        <text x="278" y="747" fill="#999999" font-size="9">X++: compile fixes, BP resolutions</text>
+        <text x="278" y="761" fill="#999999" font-size="9">CR: arch. practices, security rules</text>
+        <rect x="278" y="770" rx="3" width="180" height="14" fill="rgba(92,45,145,0.08)"/>
+        <text x="286" y="780" fill="#5C2D91" font-size="8" font-weight="600">Updated via PR → Tech Lead approves</text>
+
+        <!-- X++ Model Output -->
+        <rect x="543" y="688" rx="10" width="195" height="95" fill="#FFFFFF" stroke="rgba(16,124,16,0.2)" stroke-width="1.5"/>
+        <text x="561" y="713" fill="#107C10" font-size="16">📂</text>
+        <text x="581" y="714" fill="#1A1A1A" font-size="11" font-weight="700">X++ Model Output</text>
+        <text x="558" y="733" fill="#999999" font-size="9">Generated code on branch</text>
+        <text x="558" y="747" fill="#999999" font-size="9">Dev submits PR manually</text>
+        <rect x="558" y="758" rx="3" width="60" height="14" fill="rgba(16,124,16,0.1)"/>
+        <text x="566" y="768" fill="#107C10" font-size="8" font-weight="600">Step 3</text>
+
+        <!-- ── Agents → Git Zone (down) ── -->
+        <!-- Agents → Templates (multi-step) -->
+        <path d="M 95 460 L 95 640 L 138 640 L 138 688" fill="none" stroke="#FF5800" stroke-width="1" stroke-dasharray="5 3" class="flow-line-animated" opacity="0.5" marker-end="url(#arr-p1)"/>
+        <!-- Agents → Playbooks (Step 4 purple — CR controls playbooks) -->
+        <path d="M 415 460 L 415 640 L 393 640 L 393 688" fill="none" stroke="#5C2D91" stroke-width="1.2" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p4)"/>
+        <!-- X++ (Step 3 green) → Model output -->
+        <path d="M 660 460 L 660 645 L 641 645 L 641 688" fill="none" stroke="#107C10" stroke-width="1.2" stroke-dasharray="5 3" class="flow-line-animated" marker-end="url(#arr-p3)"/>
+
+        <!-- ── Tech Lead+CR (Step 4 purple) → Git (approves Playbook PRs) ── -->
+        <path d="M 860 460 L 860 640 L 430 640 L 430 688" fill="none" stroke="#5C2D91" stroke-width="1" stroke-dasharray="4 3" class="flow-line-animated" opacity="0.5" marker-end="url(#arr-p4)"/>
+
+      </svg>
+    </div>
+
+    <div class="fc-legend reveal reveal-delay-4">
+      <div class="fc-legend-item"><div class="fc-legend-dot" style="background:#FF5800;"></div> FDD Agent</div>
+      <div class="fc-legend-item"><div class="fc-legend-dot" style="background:#0078D4;"></div> TDD Agent</div>
+      <div class="fc-legend-item"><div class="fc-legend-dot" style="background:#107C10;"></div> X++ Agent</div>
+      <div class="fc-legend-item"><div class="fc-legend-dot" style="background:#5C2D91;"></div> Code Review Agent</div>
+      <div class="fc-legend-item"><svg width="20" height="10"><line x1="0" y1="5" x2="20" y2="5" stroke="#666666" stroke-width="1.5" stroke-dasharray="4 2"/></svg> Data Flow</div>
+    </div>
+  </div>
+</section>
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ STEP DETAILS ═══ -->
+<div id="steps">
+
+<!-- Step 1 -->
+<section class="phase-detail" style="background: radial-gradient(ellipse 50% 40% at 80% 20%, var(--green-glow) 0%, transparent 70%);">
+  <div class="container">
+    <div class="section-label reveal">Step 1 — Ready for Testing</div>
+    <h2 class="section-title reveal reveal-delay-1">FDD Generator</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Transforms a DevOps Work Item into a complete Functional Design Document. Classifies requirements as Standard, Configuration, or Customization (GAP) with MS Learn evidence. Operates in autonomous or co-authoring mode.
+    </p>
+    <div class="connections-grid reveal reveal-delay-3">
+      <div class="conn-card type-human">
+        <div class="conn-type"><span class="dot-indicator"></span> Human Interaction</div>
+        <h4>Functional Consultant</h4>
+        <ul>
+          <li>Triggers the agent and reviews output</li>
+          <li>Answers clarification questions</li>
+          <li>Co-authoring mode: reviews topic-by-topic</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>Azure DevOps MCP</h4>
+        <ul>
+          <li>Reads WI, PBI, CR + all comments</li>
+          <li>Downloads parent FDD (Word) for Change Requests</li>
+          <li>Uploads generated FDD as attachment</li>
+          <li>Mentions stakeholders for async clarification</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>MS Learn MCP</h4>
+        <ul>
+          <li>Standard vs. Config vs. GAP classification</li>
+          <li>Generates configuration guides for config-only items</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server — Upcoming</div>
+        <h4>D365FO MCP Server (Microsoft)</h4>
+        <ul>
+          <li>Returns standard form layouts for automated mockups</li>
+          <li>Agent overlays custom fields/buttons on real UI</li>
+        </ul>
+      </div>
+      <div class="conn-card type-git">
+        <div class="conn-type"><span class="dot-indicator"></span> GitHub Repository</div>
+        <h4>FDD Templates + Playbook</h4>
+        <ul>
+          <li>Versioned document templates (Git-tracked)</li>
+          <li>Lessons Learned: classification accuracy, recurring clarifications</li>
+        </ul>
+      </div>
+      <div class="conn-card type-output">
+        <div class="conn-type"><span class="dot-indicator"></span> Output</div>
+        <h4>FDD Document</h4>
+        <p>Word or Markdown, attached to the DevOps Work Item. Includes requirement classification, configuration guides, GAP specifications, and clarification audit trail.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Step 2 -->
+<section class="phase-detail" style="background: radial-gradient(ellipse 50% 40% at 20% 80%, var(--accent-glow) 0%, transparent 70%);">
+  <div class="container">
+    <div class="section-label reveal">Step 2 — Next Implementation</div>
+    <h2 class="section-title reveal reveal-delay-1">TDD Generator</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Translates functional requirements (GAPs) into a prescriptive Technical Design Document. Queries 584K+ AOT objects for evidence-based extension strategy decisions. Outputs a structured Execution Prompt as an executable contract for Step 3.
+    </p>
+    <div class="connections-grid reveal reveal-delay-3">
+      <div class="conn-card type-human">
+        <div class="conn-type"><span class="dot-indicator"></span> Human Interaction</div>
+        <h4>Developer</h4>
+        <ul>
+          <li>Triggers agent, reviews TDD + Execution Prompt</li>
+          <li>Answers technical clarification questions</li>
+          <li>Co-authoring: reviews method-by-method</li>
+          <li>Revisions feed the Lessons Learned loop</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>Azure DevOps MCP</h4>
+        <ul>
+          <li>Downloads FDD from sibling task</li>
+          <li>Creates sub-task, uploads TDD + Execution Prompt</li>
+          <li>Posts review notification comment</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>Ninja MCP Server (Hybrid)</h4>
+        <ul>
+          <li><code>search</code> / <code>batch_search</code> — 584K+ symbol lookup</li>
+          <li><code>recommend_extension_strategy</code> — CoC vs. event handler</li>
+          <li><code>analyze_extension_points</code> — extensible methods &amp; delegates</li>
+          <li><code>find_coc_extensions</code> / <code>find_event_handlers</code> — existing wrappers</li>
+          <li><code>suggest_edt</code> — EDT suggestions with confidence score</li>
+          <li><code>get_table_info</code> — schema, indexes, foreign keys</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>MS Learn MCP</h4>
+        <ul>
+          <li>Extensibility best practices validation</li>
+          <li>CoC vs. event handler pattern guidance</li>
+        </ul>
+      </div>
+      <div class="conn-card type-local">
+        <div class="conn-type"><span class="dot-indicator"></span> Local Files</div>
+        <h4>Architect Manifesto / Constitution</h4>
+        <ul>
+          <li>Model prefix and naming conventions</li>
+          <li>Configurable detail level (signatures-only or full scaffold)</li>
+          <li>Project-specific rules</li>
+        </ul>
+      </div>
+      <div class="conn-card type-git">
+        <div class="conn-type"><span class="dot-indicator"></span> GitHub Repository</div>
+        <h4>TDD Templates + Playbook</h4>
+        <ul>
+          <li>Versioned TDD templates</li>
+          <li>Playbook categories: Extensibility, Object Mapping, Naming, Common Mistakes</li>
+          <li>Lessons Learned updated via PR (Tech Lead approves)</li>
+        </ul>
+      </div>
+      <div class="conn-card type-output span-2">
+        <div class="conn-type"><span class="dot-indicator"></span> Output — Dual Artifacts</div>
+        <h4>TDD + Execution Prompt</h4>
+        <p>The <strong>TDD</strong> is the human-readable design document. The <strong>Execution Prompt</strong> is a structured Markdown contract (schema per object) consumed by the X++ Agent — containing AOT type, action (create/extend), base object, method signatures, field specs, extension points, dependencies, and Ninja MCP evidence trail.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Step 3 -->
+<section class="phase-detail" style="background: radial-gradient(ellipse 50% 40% at 80% 80%, var(--cyan-glow) 0%, transparent 70%);">
+  <div class="container">
+    <div class="section-label reveal">Step 3 — Planned</div>
+    <h2 class="section-title reveal reveal-delay-1">X++ Code Generator</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Consumes the Execution Prompt and generates X++ objects in D365FO compilation dependency order. Each step is validated with automated build + best practice checks. Developer pre-creates the VS Solution and projects before triggering the agent.
+    </p>
+
+    <h4 class="reveal" style="color:var(--text-secondary); font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.75rem;">Hierarchical Generation Order</h4>
+    <div class="hierarchy-track reveal reveal-delay-1">
+      <div class="h-step"><span class="h-num">01</span>Labels</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">02</span>Enums</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">03</span>EDTs</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">04</span>Tables</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">05</span>Table Ext.</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">06</span>Views</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">07</span>Queries</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">08</span>Data Entities</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">09</span>Classes</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">10</span>Forms</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">11</span>Reports</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">12</span>Menu Items</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">13</span>Menus</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">14</span>Security</div>
+    </div>
+
+    <div class="connections-grid reveal reveal-delay-2">
+      <div class="conn-card type-human">
+        <div class="conn-type"><span class="dot-indicator"></span> Human Interaction</div>
+        <h4>Developer</h4>
+        <ul>
+          <li>Creates VS Solution (.sln) + D365FO projects (.rnrproj) upfront</li>
+          <li>Confirms generation plan before execution</li>
+          <li>Resolves compilation errors the agent cannot auto-fix</li>
+          <li>Manually submits PR to GitHub</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>Ninja MCP Server (Hybrid)</h4>
+        <ul>
+          <li><code>create_d365fo_file</code> — 26+ AOT types via C# bridge</li>
+          <li><code>modify_d365fo_file</code> — 25+ modification operations</li>
+          <li><code>generate_code</code> — CoC, batch, SysOperation boilerplate</li>
+          <li><code>generate_smart_table/form/report</code> — intelligent scaffolding</li>
+          <li><code>build_d365fo_project</code> + <code>run_bp_check</code> — Build Validation Loop</li>
+          <li><code>get_d365fo_error_help</code> — compilation error diagnostics</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>Azure DevOps MCP</h4>
+        <ul>
+          <li>Downloads Execution Prompt + TDD</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>MS Learn MCP</h4>
+        <ul>
+          <li>Consulted when encountering compilation or BP errors</li>
+        </ul>
+      </div>
+      <div class="conn-card type-local">
+        <div class="conn-type"><span class="dot-indicator"></span> Local Files</div>
+        <h4>Manifesto + Config (.md)</h4>
+        <ul>
+          <li>Model prefix, naming conventions, project rules</li>
+          <li>Project path, model target</li>
+        </ul>
+      </div>
+      <div class="conn-card type-git">
+        <div class="conn-type"><span class="dot-indicator"></span> GitHub Repository</div>
+        <h4>X++ Playbook</h4>
+        <ul>
+          <li>Compilation fix patterns</li>
+          <li>BP warning resolution recipes</li>
+          <li>Code generation patterns (updated via PR, TL approves)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Step 4 -->
+<section class="phase-detail">
+  <div class="container">
+    <div class="section-label reveal">Step 4 — Planned</div>
+    <h2 class="section-title reveal reveal-delay-1">Code Review Agent</h2>
+    <p class="section-sub reveal reveal-delay-2">
+      Analyzes Pull Request diffs against official best practices, project-specific rules, and accumulated team knowledge. Posts structured comments directly on the PR. Tech Lead retains final approval authority.
+    </p>
+    <div class="connections-grid reveal reveal-delay-3">
+      <div class="conn-card type-human">
+        <div class="conn-type"><span class="dot-indicator"></span> Human Interaction</div>
+        <h4>Tech Lead</h4>
+        <ul>
+          <li>Reviews agent comments on the PR</li>
+          <li>Final merge approval authority</li>
+          <li>TL's comments become Lessons Learned for future reviews</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>GitHub MCP</h4>
+        <ul>
+          <li>Reads PR diff and existing comments</li>
+          <li>Posts structured review comments</li>
+          <li>Reads Tech Lead feedback for learning loop</li>
+        </ul>
+      </div>
+      <div class="conn-card type-mcp">
+        <div class="conn-type"><span class="dot-indicator"></span> MCP Server</div>
+        <h4>MS Learn MCP</h4>
+        <ul>
+          <li>Official extensibility and security best practices</li>
+        </ul>
+      </div>
+      <div class="conn-card type-local">
+        <div class="conn-type"><span class="dot-indicator"></span> Local Files</div>
+        <h4>Architect Manifesto</h4>
+        <ul>
+          <li>Project-specific coding standards and rules</li>
+        </ul>
+      </div>
+      <div class="conn-card type-git">
+        <div class="conn-type"><span class="dot-indicator"></span> GitHub Repository</div>
+        <h4>Code Review Playbook</h4>
+        <ul>
+          <li>Architectural best practices synthesized from TL comments</li>
+          <li>Security rules, performance patterns</li>
+          <li>Updated via PR (TL approves merge)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /Steps -->
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ LEARNING LOOP ═══ -->
+<section id="learning" style="background: var(--bg-secondary);">
+  <div class="container" style="text-align:center;">
+    <div class="section-label reveal">Continuous Improvement</div>
+    <h2 class="section-title reveal reveal-delay-1">Agents that learn<br>from your team</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto 2rem;">
+      Every agent maintains a <strong style="color:var(--text-primary)">Playbook</strong> (Git-versioned) that evolves with each iteration. Human revisions become structured lessons — approved by the Tech Lead via PR — and absorbed into future generations.
+    </p>
+    <div class="loop-flow reveal reveal-delay-3">
+      <div class="loop-step">
+        <div class="step-label">Step 1</div>
+        <div class="step-text">Professional reviews<br>agent output</div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">Step 2</div>
+        <div class="step-text">Agent diffs original<br>vs. revision</div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">Step 3</div>
+        <div class="step-text">Generates structured<br>Lessons Learned</div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">Step 4</div>
+        <div class="step-text">Creates PR to update<br>Playbook on GitHub</div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step" style="border-color: var(--border-accent);">
+        <div class="step-label" style="color:var(--green);">Step 5</div>
+        <div class="step-text">Tech Lead approves<br>→ Agent improves</div>
+      </div>
+    </div>
+
+    <div class="knowledge-grid reveal reveal-delay-4" style="margin-top:3rem; max-width:800px; margin-left:auto; margin-right:auto;">
+      <div class="k-card" style="text-align:left;">
+        <h4 style="color:var(--accent-light);">TDD Playbook</h4>
+        <ul style="list-style:none;">
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Extensibility decisions</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Object mapping patterns</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Naming conventions</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Common design mistakes</li>
+        </ul>
+      </div>
+      <div class="k-card" style="text-align:left;">
+        <h4 style="color:var(--cyan);">X++ Playbook</h4>
+        <ul style="list-style:none;">
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Compilation fix patterns</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› BP warning resolutions</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Code generation recipes</li>
+        </ul>
+      </div>
+      <div class="k-card" style="text-align:left;">
+        <h4 style="color:var(--green);">Code Review Playbook</h4>
+        <ul style="list-style:none;">
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Architectural best practices</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› Security & performance rules</li>
+          <li style="font-size:0.8rem; color:var(--text-secondary); padding:0.2rem 0;">› TL-synthesized guidelines</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="avanade-divider"></div>
+
+<!-- ═══ IMPACT ═══ -->
+<section id="impact">
+  <div class="container">
+    <div class="section-label reveal" style="text-align:center;">Outcomes</div>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">Before vs. After</h2>
+
+    <div class="impact-grid reveal reveal-delay-2">
+      <div class="impact-header step">Step</div>
+      <div class="impact-header before">Before AI (Manual Slog)</div>
+      <div class="impact-header after">After AI (Agentic Precision)</div>
+
+      <div class="impact-row">
+        <div class="impact-cell step">Analysis (FDD)</div>
+        <div class="impact-cell before"><strong>Memory-Based:</strong> Quality depends on individual experience and hours of manual MS Learn research.</div>
+        <div class="impact-cell after"><strong>Evidence-Based:</strong> Agent classifies Standard/Config/GAP with instant, cited MS Learn documentation.</div>
+      </div>
+      <div class="impact-row">
+        <div class="impact-cell step">Design (TDD)</div>
+        <div class="impact-cell before"><strong>Tedious Document Development:</strong> Static Word docs authored without real-time development challenge, the developers most of the case needs to review the document after the final solution</div>
+        <div class="impact-cell after"><strong>The Technical Scaffold:</strong> Agent queries the live AOT to build a cited code blueprint that acts as a generation engine.</div>
+      </div>
+      <div class="impact-row">
+        <div class="impact-cell step">Development</div>
+        <div class="impact-cell before"><strong>The Bureaucracy Trap:</strong> Hours wasted on "plumbing" (Labels, EDTs, Enums) and manual dependency tracking.</div>
+        <div class="impact-cell after"><strong>Hierarchical Generation:</strong> Agent handles the entire "Plumbing Stack" (Labels, EDTs, Enums, Tables…) with automated builds at every layer — freeing the developer to focus 100% on complex business logic.</div>
+      </div>
+      <div class="impact-row">
+        <div class="impact-cell step">Quality (QA)</div>
+        <div class="impact-cell before"><strong>Manual Drudgery:</strong> Tech Leads spend hours hunting for naming errors, missing Labels, and BP violations in PRs.</div>
+        <div class="impact-cell after"><strong>Targeted Review:</strong> Agent flags deviations and Playbook violations. Tech Leads go straight to the Agent-highlighted hotspots.</div>
+      </div>
+      <div class="impact-row">
+        <div class="impact-cell step">Knowledge (IP)</div>
+        <div class="impact-cell before"><strong>The Brain Drain:</strong> Lessons learned and project logic are lost when consultants roll off or projects end.</div>
+        <div class="impact-cell after"><strong>Self-Evolving Playbooks:</strong> The Agent learns from every project revision, creating a Compound Intelligence for the team.</div>
+      </div>
+    </div>
+
+    <!-- Roadmap -->
+    <h3 class="reveal" style="text-align:center; font-size:1.3rem; font-weight:700; margin-top:4rem; margin-bottom:1.5rem;">Roadmap</h3>
+    <div class="roadmap reveal reveal-delay-1">
+      <div class="roadmap-card live">
+        <div class="rm-phase">Step 1</div>
+        <h4>FDD Generator <span class="status-live green" style="font-size:0.6rem; vertical-align:middle;">● Ready</span></h4>
+        <p>Next: automated mockup generation via D365FO MCP Server (Microsoft).</p>
+      </div>
+      <div class="roadmap-card next">
+        <div class="rm-phase">Step 2</div>
+        <h4>TDD Generator</h4>
+        <p>Implement agent + Execution Prompt schema. Integrate Ninja MCP hybrid mode for evidence-based design.</p>
+      </div>
+      <div class="roadmap-card planned">
+        <div class="rm-phase">Step 3</div>
+        <h4>X++ Generator</h4>
+        <p>Hierarchical code generation with Build Validation Loop. Depends on Step 2 completion.</p>
+      </div>
+      <div class="roadmap-card planned">
+        <div class="rm-phase">Step 4</div>
+        <h4>Code Review Agent</h4>
+        <p>Research GitHub Actions trigger for automated PR review invocation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div style="margin-bottom:1rem;">
+    <!-- Official Avanade Logo (extracted from avanade.com) -->
+    <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px; width:75px;">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M64.1487 27.819C63.7394 27.9328 63.2731 27.9891 62.7503 27.9891C61.4313 27.9891 60.7718 27.5126 60.7718 26.5595C60.7718 25.5613 61.4993 25.0618 62.955 25.0618C63.5459 25.0618 63.944 25.096 64.1487 25.1641V27.819ZM62.3078 19.6499C61.7392 19.6499 61.1875 19.7009 60.6535 19.803C60.1191 19.9052 59.6925 20.0472 59.3742 20.2285L59.545 21.8282C60.0225 21.6922 60.4487 21.5959 60.824 21.539C61.1993 21.4827 61.5799 21.4538 61.9668 21.4538C63.4219 21.4538 64.1498 22.0102 64.1498 23.1216V23.4961C63.8088 23.428 63.3312 23.3941 62.7174 23.3941C61.4434 23.3941 60.4371 23.6781 59.6984 24.2451C58.9592 24.8125 58.5898 25.5954 58.5898 26.5934C58.5898 28.6357 59.9885 29.6569 62.7854 29.6569C63.9222 29.6569 65.1052 29.4867 66.3329 29.1462V23.2918C66.3329 20.8642 64.9908 19.6499 62.3078 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M74.777 23.8028C74.777 22.9408 74.6117 22.3449 74.2823 22.0158C73.9524 21.6873 73.3667 21.5224 72.5257 21.5224C72.3209 21.5224 72.0764 21.5451 71.7922 21.5903C71.5076 21.6362 71.2407 21.6925 70.9905 21.7604V29.4189H68.7734V20.365C69.3414 20.1385 69.9897 19.9625 70.7177 19.8374C71.4452 19.713 72.1504 19.6504 72.8327 19.6504C75.6068 19.6504 76.994 20.8984 76.994 23.3943V29.4189H74.777V23.8028Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M84.2928 27.819C83.8835 27.9328 83.4171 27.9891 82.8943 27.9891C81.5751 27.9891 80.9161 27.5126 80.9161 26.5595C80.9161 25.5613 81.6434 25.0618 83.0991 25.0618C83.6899 25.0618 84.088 25.096 84.2928 25.1641V27.819ZM82.4524 19.6499C81.8837 19.6499 81.332 19.7009 80.798 19.803C80.2636 19.9052 79.837 20.0472 79.5188 20.2285L79.6895 21.8282C80.1671 21.6922 80.5933 21.5959 80.9686 21.539C81.3438 21.4827 81.7244 21.4538 82.1113 21.4538C83.5664 21.4538 84.2944 22.0102 84.2944 23.1216V23.4961C83.9533 23.428 83.4757 23.3941 82.8619 23.3941C81.5879 23.3941 80.5819 23.6781 79.8431 24.2451C79.1037 24.8125 78.7344 25.5954 78.7344 26.5934C78.7344 28.6357 80.133 29.6569 82.9299 29.6569C84.067 29.6569 85.2497 29.4867 86.4774 29.1462V23.2918C86.4774 20.8642 85.1354 19.6499 82.4524 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M94.7312 27.6828C94.4806 27.7737 94.0261 27.819 93.3668 27.819C91.479 27.819 90.5357 26.7866 90.5357 24.7215C90.5357 23.678 90.7798 22.8723 91.2689 22.3049C91.7577 21.7379 92.4459 21.4539 93.3326 21.4539C93.8786 21.4539 94.3443 21.5336 94.7312 21.6922V27.6828ZM94.7321 16.2124V19.8543C94.3228 19.7183 93.7882 19.6502 93.1289 19.6502C91.6732 19.6502 90.4907 20.1212 89.5812 21.0627C88.6715 22.0044 88.2168 23.2358 88.2168 24.7558C88.2168 26.3442 88.6605 27.5585 89.5472 28.3977C90.4341 29.2373 91.7302 29.6569 93.4357 29.6569C94.5045 29.6569 95.6756 29.4868 96.9492 29.1465V16.2124H94.7321Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M101.008 23.6663C101.077 22.9403 101.298 22.3729 101.673 21.9645C102.049 21.5561 102.531 21.3517 103.123 21.3517C103.714 21.3517 104.192 21.5561 104.556 21.9645C104.919 22.3729 105.101 22.9403 105.101 23.6663H101.008ZM107.25 24.1428C107.25 22.759 106.886 21.6638 106.159 20.8581C105.431 20.0531 104.441 19.6499 103.191 19.6499C101.827 19.6499 100.74 20.1041 99.9335 21.0114C99.126 21.9191 98.7227 23.1558 98.7227 24.7214C98.7227 26.2872 99.1544 27.5013 100.019 28.3635C100.883 29.2261 102.111 29.6569 103.703 29.6569C104.748 29.6569 105.738 29.4749 106.67 29.1122L106.431 27.4444C105.635 27.7166 104.782 27.8528 103.873 27.8528C102.008 27.8528 101.053 27.0136 101.008 25.3341H107.25V24.1428Z" fill="#FF5800"/>
+      <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#paint0_ftr)"/>
+      <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#paint1_ftr)"/>
+      <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#paint2_ftr)"/>
+      <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#paint3_ftr)"/>
+      <defs>
+        <linearGradient id="paint0_ftr" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.2422" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.3963" stop-color="#FFB414"/><stop offset="0.4725" stop-color="#FFB414"/><stop offset="0.5476" stop-color="#FFB414"/><stop offset="0.62" stop-color="#FFB414"/><stop offset="0.6597" stop-color="#FFB414"/><stop offset="0.7244" stop-color="#FFB414"/><stop offset="0.8061" stop-color="#FF5800"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="paint1_ftr" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.1898" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.4034" stop-color="#FFB414"/><stop offset="0.47" stop-color="#FFB414"/><stop offset="0.5314" stop-color="#FFB414"/><stop offset="0.6235" stop-color="#FFB414"/><stop offset="0.7342" stop-color="#FF5800"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="paint2_ftr" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A" stop-opacity="0.99"/><stop offset="0.7559" stop-color="#CE056A"/><stop offset="0.8091" stop-color="#CE056A" stop-opacity="0.9955"/><stop offset="0.8494" stop-color="#CE056A" stop-opacity="0.9968"/><stop offset="0.8833" stop-color="#CE056A" stop-opacity="0.9978"/><stop offset="0.9131" stop-color="#FF5800" stop-opacity="0.9988"/><stop offset="0.9397" stop-color="#FF5800" stop-opacity="0.9997"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="paint3_ftr" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.0624571" stop-color="#FF5800"/><stop offset="0.1272" stop-color="#FF5800"/><stop offset="0.1929" stop-color="#DC4600"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.3" stop-color="#C80000"/><stop offset="0.48" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <strong>D365FO AI-Driven Delivery Framework</strong><br>
+  GitHub Copilot Agent Mode &middot; Human-in-the-loop &middot; Reusable across all D365 FnO projects (SCM / HR)<br>
+  <span style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; display:inline-block;">&copy; Avanade Inc. — The world&#39;s leading Microsoft expert</span>
+</footer>
+
+<!-- ═══ SCROLL REVEAL ═══ -->
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

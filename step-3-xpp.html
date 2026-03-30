@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 3 — X++ Agent · D365FO AI Framework — Avanade</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --bg-card: #FFFFFF;
+    --accent: #FF5800;
+    --agent-color: #107C10;
+    --agent-glow: rgba(16,124,16,0.07);
+    --agent-border: rgba(16,124,16,0.3);
+    --green: #16a34a;
+    --red: #dc2626;
+    --text-primary: #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    --border: rgba(0,0,0,0.10);
+    --border-accent: rgba(16,124,16,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 0;
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(16,124,16,0.025) 40px, rgba(16,124,16,0.025) 41px),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(16,124,16,0.025) 40px, rgba(16,124,16,0.025) 41px);
+  }
+
+  /* ── NAV ── */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  nav .inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  nav .logo { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1rem; color: #FF5800; text-decoration: none; }
+  nav .logo svg { height: 24px; width: auto; }
+  nav .logo .logo-text { font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); letter-spacing: 0.02em; }
+  nav .links { display: flex; gap: 1.2rem; align-items: center; }
+  nav .links a { color: var(--text-secondary); text-decoration: none; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; transition: color 0.2s; }
+  nav .links a:hover { color: var(--agent-color); }
+  nav .links a.back-link { background: var(--agent-glow); border: 1px solid var(--agent-border); padding: 0.35rem 0.9rem; border-radius: 100px; color: var(--agent-color); font-weight: 600; text-transform: none; }
+  nav .links a.back-link:hover { background: var(--agent-color); color: #fff; }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown > a::after { content: ' ▾'; font-size: 0.6em; vertical-align: middle; }
+  .nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0; min-width: 220px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 200; }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a { display: flex !important; align-items: center; gap: 0.6rem; padding: 0.55rem 1.2rem !important; font-size: 0.78rem !important; text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap; }
+  .nav-dropdown-menu a:hover { background: var(--agent-glow); }
+  .nav-dropdown-menu .dd-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .nav-dropdown-menu a.active { font-weight: 700; color: var(--agent-color) !important; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; width: 100%; margin: 0 auto; }
+  section { padding: 5rem 2rem; position: relative; z-index: 1; }
+  .section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--agent-color); margin-bottom: 0.75rem; }
+  .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem; }
+  .section-sub { font-size: 1rem; color: var(--text-secondary); max-width: 700px; line-height: 1.7; margin-bottom: 2rem; }
+
+  /* ── HERO ── */
+  .hero { padding: 8rem 2rem 4rem; text-align: center; background: linear-gradient(160deg, rgba(16,124,16,0.04) 0%, transparent 40%), radial-gradient(ellipse 80% 60% at 50% -10%, rgba(16,124,16,0.05) 0%, transparent 70%); }
+  .hero .badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; border-radius: 100px; background: var(--agent-glow); border: 1px solid var(--agent-border); font-size: 0.75rem; font-weight: 600; color: var(--agent-color); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .hero .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #888; animation: pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1.5rem; }
+  .hero h1 .gradient { background: linear-gradient(135deg, #107C10 0%, #4CAF50 50%, #81C784 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero .subtitle { font-size: 1.15rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto; font-weight: 400; line-height: 1.7; }
+  .hero .subtitle strong { color: var(--text-primary); font-weight: 600; }
+  .status-strip { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+  .status-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+  .status-item .si-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .status-item .si-dot.green { background: var(--agent-color); }
+  .status-item .si-dot.orange { background: #FF5800; }
+
+  /* ── FLOWCHART ── */
+  .flowchart-section { background: var(--bg-secondary); }
+  .flowchart-wrap { width: 100%; overflow-x: auto; padding: 1rem 0; display: flex; justify-content: center; }
+  .flowchart-svg { max-width: 960px; width: 100%; height: auto; }
+  .flowchart-svg text { font-family: 'Inter', sans-serif; }
+
+  /* ── HIERARCHY TRACK ── */
+  .hierarchy-track { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1.5rem 0; align-items: center; }
+  .h-step { padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); transition: all 0.3s; cursor: default; }
+  .h-step:hover { border-color: var(--agent-border); color: var(--agent-color); }
+  .h-arrow { color: var(--text-muted); font-size: 0.75rem; }
+  .h-step .h-num { font-size: 0.55rem; font-weight: 800; color: var(--agent-color); margin-right: 0.3rem; }
+
+  /* ── CARDS ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+  .card { padding: 1.5rem; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); transition: all 0.3s; }
+  .card:hover { border-color: var(--border-accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(16,124,16,0.10); }
+  .card .card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-bottom: 1rem; font-weight: 700; background: var(--agent-glow); color: var(--agent-color); }
+  .card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+  .card ul { list-style: none; margin-top: 0.5rem; }
+  .card ul li { font-size: 0.8rem; color: var(--text-secondary); padding: 0.2rem 0; padding-left: 1rem; position: relative; }
+  .card ul li::before { content: '›'; position: absolute; left: 0; color: var(--agent-color); font-weight: 700; }
+  .card code { font-family: 'JetBrains Mono', monospace; font-size: 0.73rem; background: rgba(16,124,16,0.07); padding: 0.1rem 0.35rem; border-radius: 3px; color: #0A5C0A; }
+  .card.span-2 { grid-column: 1 / -1; }
+  .card-tag { display: inline-block; margin-top: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.65rem; font-weight: 600; background: var(--agent-glow); color: var(--agent-color); }
+
+  /* ── TABLES ── */
+  .detail-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); }
+  .detail-table th { padding: 0.75rem 1rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; background: var(--agent-glow); color: var(--agent-color); text-align: left; border-bottom: 1px solid var(--border); }
+  .detail-table td { padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); line-height: 1.5; vertical-align: top; }
+  .detail-table tr:last-child td { border-bottom: none; }
+  .detail-table tr:hover td { background: rgba(16,124,16,0.02); }
+  .detail-table code { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; background: rgba(16,124,16,0.07); padding: 0.1rem 0.35rem; border-radius: 3px; color: #0A5C0A; }
+  .detail-table .resolved { color: var(--green); font-weight: 600; }
+  .detail-table .partial { color: #FF9800; font-weight: 600; }
+  .detail-table .pending { color: var(--red); font-weight: 600; }
+  .detail-table strong { color: var(--text-primary); }
+
+  /* ── BUILD LOOP ── */
+  .loop-flow { display: flex; align-items: center; justify-content: center; gap: 0; margin: 2.5rem 0; flex-wrap: wrap; }
+  .loop-step { padding: 0.9rem 1.3rem; border-radius: 8px; text-align: center; background: var(--bg-card); border: 1px solid var(--border); min-width: 150px; }
+  .loop-step .step-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .loop-step .step-text { font-size: 0.82rem; font-weight: 600; }
+  .loop-arrow { font-size: 1.2rem; color: var(--agent-color); padding: 0 0.4rem; }
+
+  /* ── EVIDENCE QUOTE ── */
+  .evidence-quote { background: #F1F8F1; border-left: 3px solid var(--agent-color); padding: 1.25rem 1.5rem; border-radius: 0 8px 8px 0; margin: 2rem 0; }
+  .evidence-quote p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; }
+
+  /* ── STEP NAV ── */
+  .step-nav { display: flex; justify-content: space-between; align-items: center; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid var(--border); }
+  .step-nav a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; border: 1px solid var(--border); color: var(--text-secondary); }
+  .step-nav a:hover { border-color: var(--agent-border); color: var(--agent-color); }
+  .step-nav a.next { background: var(--agent-color); color: #fff; border-color: var(--agent-color); }
+  .step-nav a.next:hover { opacity: 0.9; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; position: relative; z-index: 1; background: linear-gradient(155deg, #F5F5F5 0%, #F5F5F5 50%, rgba(16,124,16,0.04) 50%); }
+  footer strong { color: var(--text-secondary); }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  @media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr; } nav .links { display: none; } .loop-flow { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="inner">
+    <a href="presentation.html" class="logo">
+      <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+        <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0_s3n)"/>
+        <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1_s3n)"/>
+        <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2_s3n)"/>
+        <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3_s3n)"/>
+        <defs>
+          <linearGradient id="p0_s3n" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p1_s3n" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p2_s3n" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p3_s3n" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">|&ensp;X++ Agent</span>
+    </a>
+    <div class="links">
+      <a href="#workflow">Workflow</a>
+      <a href="#hierarchy">Hierarchy</a>
+      <a href="#buildloop">Build Loop</a>
+      <a href="#tools">Tools</a>
+      <a href="#attention">Attention</a>
+      <div class="nav-dropdown">
+        <a href="#">All Agents</a>
+        <div class="nav-dropdown-menu">
+          <a href="step-1-fdd.html"><span class="dd-dot" style="background:#FF5800;"></span>Step 1 — FDD Agent</a>
+          <a href="step-2-tdd.html"><span class="dd-dot" style="background:#0078D4;"></span>Step 2 — TDD Agent</a>
+          <a href="step-3-xpp.html" class="active"><span class="dd-dot" style="background:#107C10;"></span>Step 3 — X++ Agent</a>
+          <a href="step-4-cr.html"><span class="dd-dot" style="background:#5C2D91;"></span>Step 4 — Code Review</a>
+        </div>
+      </div>
+      <a href="presentation.html" class="back-link">← Overview</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="container">
+    <div class="badge reveal"><span class="dot"></span> Step 3 — Planned</div>
+    <h1 class="reveal reveal-delay-1"><span class="gradient">X++ Code Generator</span><br>Agent</h1>
+    <p class="subtitle reveal reveal-delay-2">
+      Consumes the <strong>Execution Prompt</strong> from Step 2 and generates X++ objects in D365FO compilation dependency order. Each step is validated with automated build + best practice checks via <strong>Ninja MCP</strong>.
+    </p>
+    <div class="status-strip reveal reveal-delay-3">
+      <div class="status-item"><span class="si-dot green"></span> Design complete</div>
+      <div class="status-item"><span class="si-dot orange"></span> Human-in-the-loop</div>
+      <div class="status-item"><span class="si-dot green"></span> Developer</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WORKFLOW FLOWCHART ═══ -->
+<section id="workflow" class="flowchart-section">
+  <div class="container">
+    <div class="section-label reveal">Agent Workflow</div>
+    <h2 class="section-title reveal reveal-delay-1">From Execution Prompt to compiled X++ code</h2>
+    <p class="section-sub reveal reveal-delay-2">The developer creates the VS Solution and projects, triggers the agent, confirms the plan, and iterates with the Build Validation Loop.</p>
+
+    <div class="flowchart-wrap reveal reveal-delay-3">
+      <svg class="flowchart-svg" viewBox="0 0 960 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="960" height="500" rx="16" fill="#FAFAFA"/>
+
+        <!-- Row 1: Prerequisites -->
+        <rect x="30" y="25" width="900" height="75" rx="10" fill="rgba(16,124,16,0.03)" stroke="rgba(16,124,16,0.15)" stroke-width="1"/>
+        <text x="50" y="46" fill="#107C10" font-size="8" font-weight="700" letter-spacing="0.08em">PRE-REQUISITE (DEVELOPER)</text>
+        <rect x="50" y="52" width="240" height="36" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.5"/>
+        <text x="170" y="74" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Create VS Solution (.sln)</text>
+        <line x1="290" y1="70" x2="330" y2="70" stroke="#107C10" stroke-width="1.5" marker-end="url(#arrG)"/>
+        <rect x="330" y="52" width="260" height="36" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.5"/>
+        <text x="460" y="74" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Create D365FO Projects (.rnrproj)</text>
+        <line x1="590" y1="70" x2="630" y2="70" stroke="#107C10" stroke-width="1.5" marker-end="url(#arrG)"/>
+        <rect x="630" y="52" width="260" height="36" rx="8" fill="#FFF7F2" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="760" y="72" text-anchor="middle" fill="#FF5800" font-size="10" font-weight="700">⚠ Ninja MCP does NOT</text>
+        <text x="760" y="85" text-anchor="middle" fill="#555" font-size="8.5">create .sln or .rnrproj files</text>
+
+        <!-- Row 2: Trigger + Plan -->
+        <rect x="30" y="120" width="900" height="78" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+        <text x="50" y="141" fill="#555" font-size="8" font-weight="700" letter-spacing="0.08em">TRIGGER + CONTEXT</text>
+        <rect x="50" y="150" width="200" height="36" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.5"/>
+        <text x="150" y="172" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Developer triggers agent</text>
+        <line x1="250" y1="168" x2="285" y2="168" stroke="#107C10" stroke-width="1.5" marker-end="url(#arrG)"/>
+        <rect x="285" y="150" width="220" height="36" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.5"/>
+        <text x="395" y="168" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Download Execution Prompt</text>
+        <text x="395" y="180" text-anchor="middle" fill="#999" font-size="8">Azure DevOps MCP</text>
+        <line x1="505" y1="168" x2="540" y2="168" stroke="#107C10" stroke-width="1.5" marker-end="url(#arrG)"/>
+        <rect x="540" y="150" width="220" height="36" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.5"/>
+        <text x="650" y="168" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Local context analysis</text>
+        <text x="650" y="180" text-anchor="middle" fill="#999" font-size="8">Ninja MCP + local file search</text>
+        <line x1="760" y1="168" x2="795" y2="168" stroke="#107C10" stroke-width="1.5" marker-end="url(#arrG)"/>
+        <rect x="795" y="150" width="120" height="36" rx="8" fill="#E8F5E9" stroke="#107C10" stroke-width="1.5"/>
+        <text x="855" y="172" text-anchor="middle" fill="#107C10" font-size="10" font-weight="700">Confirm Plan</text>
+
+        <line x1="480" y1="100" x2="480" y2="120" stroke="#107C10" stroke-width="1" stroke-dasharray="4 3"/>
+
+        <!-- Row 3: Hierarchical generation + build loop (visual callout boxes) -->
+        <rect x="30" y="218" width="560" height="90" rx="10" fill="rgba(16,124,16,0.03)" stroke="rgba(16,124,16,0.13)" stroke-width="1"/>
+        <text x="50" y="238" fill="#107C10" font-size="8" font-weight="700" letter-spacing="0.08em">HIERARCHICAL GENERATION (14 steps)</text>
+        <text x="50" y="260" fill="#555" font-size="9.5">Labels → Enums → EDTs → Tables → Table Ext. → Views →</text>
+        <text x="50" y="276" fill="#555" font-size="9.5">Queries → Data Entities → Classes → Forms → Reports →</text>
+        <text x="50" y="292" fill="#555" font-size="9.5">Menu Items → Menus → Security</text>
+        <text x="50" y="308" fill="#107C10" font-size="8" font-style="italic">Only relevant steps generated — confirmed by developer</text>
+
+        <rect x="610" y="218" width="320" height="90" rx="10" fill="rgba(255,88,0,0.03)" stroke="rgba(255,88,0,0.15)" stroke-width="1"/>
+        <text x="630" y="238" fill="#FF5800" font-size="8" font-weight="700" letter-spacing="0.08em">BUILD VALIDATION LOOP</text>
+        <rect x="630" y="248" width="280" height="50" rx="8" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="770" y="267" text-anchor="middle" fill="#107C10" font-size="9" font-weight="700">build_d365fo_project</text>
+        <text x="770" y="280" text-anchor="middle" fill="#555" font-size="8">→ get_d365fo_error_help → run_bp_check</text>
+        <text x="770" y="293" text-anchor="middle" fill="#555" font-size="8">Auto-fix → ask developer if stuck</text>
+
+        <line x1="480" y1="198" x2="480" y2="218" stroke="#107C10" stroke-width="1" stroke-dasharray="4 3"/>
+
+        <!-- Row 4: Ninja MCP tools -->
+        <rect x="30" y="328" width="900" height="110" rx="10" fill="rgba(255,88,0,0.03)" stroke="rgba(255,88,0,0.14)" stroke-width="1"/>
+        <text x="50" y="348" fill="#FF5800" font-size="8" font-weight="700" letter-spacing="0.08em">NINJA MCP GENERATION TOOLS</text>
+
+        <rect x="50" y="358" width="150" height="64" rx="7" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="125" y="378" text-anchor="middle" fill="#107C10" font-size="9" font-weight="600">create_d365fo_file</text>
+        <text x="125" y="393" text-anchor="middle" fill="#555" font-size="8">26+ AOT types</text>
+        <text x="125" y="406" text-anchor="middle" fill="#555" font-size="7.5">via C# bridge</text>
+
+        <rect x="215" y="358" width="150" height="64" rx="7" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="290" y="378" text-anchor="middle" fill="#107C10" font-size="9" font-weight="600">modify_d365fo_file</text>
+        <text x="290" y="393" text-anchor="middle" fill="#555" font-size="8">25+ operations</text>
+        <text x="290" y="406" text-anchor="middle" fill="#555" font-size="7.5">IMetadataProvider</text>
+
+        <rect x="380" y="358" width="150" height="64" rx="7" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="455" y="375" text-anchor="middle" fill="#107C10" font-size="9" font-weight="600">generate_code</text>
+        <text x="455" y="390" text-anchor="middle" fill="#555" font-size="8">CoC, Batch,</text>
+        <text x="455" y="403" text-anchor="middle" fill="#555" font-size="8">SysOp, EventHandler</text>
+
+        <rect x="545" y="358" width="160" height="64" rx="7" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="625" y="375" text-anchor="middle" fill="#107C10" font-size="9" font-weight="600">generate_smart_*</text>
+        <text x="625" y="390" text-anchor="middle" fill="#555" font-size="8">table / form /</text>
+        <text x="625" y="403" text-anchor="middle" fill="#555" font-size="8">SSRS report</text>
+
+        <rect x="720" y="358" width="190" height="64" rx="7" fill="#FFF" stroke="#107C10" stroke-width="1.2"/>
+        <text x="815" y="375" text-anchor="middle" fill="#107C10" font-size="9" font-weight="600">build + bp_check</text>
+        <text x="815" y="390" text-anchor="middle" fill="#555" font-size="8">+ error_help</text>
+        <text x="815" y="403" text-anchor="middle" fill="#555" font-size="8">+ undo_last_modification</text>
+
+        <!-- Row 5: Output -->
+        <line x1="480" y1="438" x2="480" y2="458" stroke="#107C10" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect x="200" y="458" width="560" height="30" rx="8" fill="#E8F5E9" stroke="#107C10" stroke-width="1.5"/>
+        <text x="480" y="478" text-anchor="middle" fill="#107C10" font-size="10.5" font-weight="700">Generated X++ files in local model folder — Developer creates PR to GitHub</text>
+
+        <defs>
+          <marker id="arrG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#107C10"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HIERARCHICAL GENERATION ORDER ═══ -->
+<section id="hierarchy">
+  <div class="container">
+    <div class="section-label reveal">Compilation Dependency Order</div>
+    <h2 class="section-title reveal reveal-delay-1">14-Step Object Generation Hierarchy</h2>
+    <p class="section-sub reveal reveal-delay-2">Objects are generated in D365FO's compilation dependency order. Each step can be confirmed or skipped. The agent generates only the steps relevant to the Execution Prompt.</p>
+
+    <div class="hierarchy-track reveal reveal-delay-3">
+      <div class="h-step"><span class="h-num">01</span>Labels</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">02</span>Enums</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">03</span>EDTs</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">04</span>Tables</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">05</span>Table Ext.</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">06</span>Views</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">07</span>Queries</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">08</span>Data Entities</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">09</span>Classes</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">10</span>Forms</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">11</span>Reports</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">12</span>Menu Items</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">13</span>Menus</div><span class="h-arrow">→</span>
+      <div class="h-step"><span class="h-num">14</span>Security</div>
+    </div>
+
+    <table class="detail-table reveal">
+      <thead><tr><th>Order</th><th>Object Type</th><th>Reason for Position</th><th>Ninja MCP Tool</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td><strong>Labels</strong></td><td>No dependencies — everything references them</td><td><code>create_label</code> (search first with <code>search_labels</code>)</td></tr>
+        <tr><td>02</td><td><strong>Base Enums + Enum Ext.</strong></td><td>EDTs can have EnumType referencing enums</td><td><code>create_d365fo_file</code> (enum, enum-extension)</td></tr>
+        <tr><td>03</td><td><strong>EDTs + EDT Ext.</strong></td><td>After enums; tables/fields reference EDTs</td><td><code>create_d365fo_file</code> (edt, edt-extension) / <code>suggest_edt</code></td></tr>
+        <tr><td>04–05</td><td><strong>Tables + Table Ext.</strong></td><td>Foundation of all data structures</td><td><code>create_d365fo_file</code> (table) / <code>generate_smart_table</code></td></tr>
+        <tr><td>06–07</td><td><strong>Views + Queries</strong></td><td>Reference tables as datasource</td><td><code>create_d365fo_file</code> (view, query)</td></tr>
+        <tr><td>08</td><td><strong>Data Entities</strong></td><td>After tables, views and queries</td><td><code>create_d365fo_file</code> (data-entity)</td></tr>
+        <tr><td>09</td><td><strong>Classes</strong> (CoC, EH, Batch, SysOp)</td><td>After tables/EDTs/enums — business logic</td><td><code>generate_code</code> / <code>create_d365fo_file</code> (class, class-extension)</td></tr>
+        <tr><td>10</td><td><strong>Forms + Form Ext.</strong></td><td>After tables and classes</td><td><code>create_d365fo_file</code> (form, form-extension) / <code>generate_smart_form</code></td></tr>
+        <tr><td>11</td><td><strong>Reports</strong> (SSRS)</td><td>After tables and classes (5 interdependent objects)</td><td><code>generate_smart_report</code></td></tr>
+        <tr><td>12–13</td><td><strong>Menu Items + Menus</strong></td><td>After forms, classes, reports (point to them)</td><td><code>create_d365fo_file</code> (menu-item-*, menu)</td></tr>
+        <tr><td>14</td><td><strong>Security</strong> (Priv → Duty → Role)</td><td>Last — privileges reference entry points (menu items)</td><td><code>create_d365fo_file</code> (security-privilege, security-duty, security-role)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ BUILD VALIDATION LOOP ═══ -->
+<section id="buildloop" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label reveal">Quality Gate</div>
+    <h2 class="section-title reveal reveal-delay-1">Build Validation Loop</h2>
+    <p class="section-sub reveal reveal-delay-2">After each generation step (or group of steps), the agent automatically compiles, diagnoses errors, runs best practice checks, and tries to self-fix before asking the developer.</p>
+
+    <div class="loop-flow reveal reveal-delay-3">
+      <div class="loop-step">
+        <div class="step-label">1. Generate</div>
+        <div class="step-text">Create/modify AOT objects</div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">2. Compile</div>
+        <div class="step-text"><code style="font-family:monospace;font-size:0.75rem;color:#0A5C0A;">build_d365fo_project</code></div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">3. Diagnose</div>
+        <div class="step-text"><code style="font-family:monospace;font-size:0.75rem;color:#0A5C0A;">get_d365fo_error_help</code></div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step">
+        <div class="step-label">4. BP Check</div>
+        <div class="step-text"><code style="font-family:monospace;font-size:0.75rem;color:#0A5C0A;">run_bp_check</code></div>
+      </div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-step" style="border-color: var(--agent-border);">
+        <div class="step-label">5. Auto-Fix</div>
+        <div class="step-text">Fix errors + BP warnings</div>
+      </div>
+      <span class="loop-arrow" style="color:#FF5800;">↻</span>
+      <div class="loop-step" style="border-color: rgba(220,38,38,0.3);">
+        <div class="step-label">6. Escalate</div>
+        <div class="step-text">Ask developer if stuck</div>
+      </div>
+    </div>
+
+    <div class="evidence-quote reveal">
+      <p>When the agent resolves a compilation or BP warning, it asks the developer whether to update the X++ Playbook with the fix pattern — keeping the lessons for future generations.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NINJA MCP TOOLS ═══ -->
+<section id="tools">
+  <div class="container">
+    <div class="section-label reveal">Full Tool Reference</div>
+    <h2 class="section-title reveal reveal-delay-1">Ninja MCP Tools Used by the X++ Agent</h2>
+
+    <table class="detail-table reveal reveal-delay-2">
+      <thead><tr><th>Action</th><th>Tool</th></tr></thead>
+      <tbody>
+        <tr><td>Create any AOT object type</td><td><code>create_d365fo_file</code> (26+ supported types)</td></tr>
+        <tr><td>Modify existing objects</td><td><code>modify_d365fo_file</code> (25+ operations)</td></tr>
+        <tr><td>Generate boilerplate patterns</td><td><code>generate_code</code> (CoC, batch, SysOperation, event handler)</td></tr>
+        <tr><td>Scaffold smart table</td><td><code>generate_smart_table</code></td></tr>
+        <tr><td>Scaffold smart form</td><td><code>generate_smart_form</code></td></tr>
+        <tr><td>Generate SSRS report (5 objects)</td><td><code>generate_smart_report</code></td></tr>
+        <tr><td>Generate AOT XML directly</td><td><code>generate_d365fo_xml</code></td></tr>
+        <tr><td>Look up exact method signatures</td><td><code>get_method_signature</code> / <code>get_method_source</code></td></tr>
+        <tr><td>Check existing CoC wrappers</td><td><code>find_coc_extensions</code></td></tr>
+        <tr><td>Suggest correct EDT</td><td><code>suggest_edt</code></td></tr>
+        <tr><td>Create / search labels</td><td><code>create_label</code> + <code>search_labels</code></td></tr>
+        <tr><td>Compile project</td><td><code>build_d365fo_project</code></td></tr>
+        <tr><td>Diagnose compilation errors</td><td><code>get_d365fo_error_help</code></td></tr>
+        <tr><td>Run best practice check</td><td><code>run_bp_check</code></td></tr>
+        <tr><td>Synchronise database schema</td><td><code>trigger_db_sync</code></td></tr>
+        <tr><td>Verify project integrity</td><td><code>verify_d365fo_project</code></td></tr>
+        <tr><td>Update symbol index</td><td><code>update_symbol_index</code></td></tr>
+        <tr><td>Undo last change</td><td><code>undo_last_modification</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ ATTENTION POINTS ═══ -->
+<section id="attention" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label reveal">Risk Management</div>
+    <h2 class="section-title reveal reveal-delay-1">Attention Points</h2>
+
+    <table class="detail-table reveal reveal-delay-2">
+      <thead><tr><th>Point</th><th>Type</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Code does not compile</strong></td><td>Risk</td><td><span class="resolved">✅ Mitigated</span></td><td>Build Validation Loop: compile → diagnose → fix → ask developer</td></tr>
+        <tr><td><strong>Malformed metadata XML</strong></td><td>Risk</td><td><span class="resolved">✅ Mitigated</span></td><td>Ninja MCP generates XML via C# bridge (IMetadataProvider)</td></tr>
+        <tr><td><strong>Conflicts with existing objects</strong></td><td>Risk</td><td><span class="resolved">✅ Mitigated</span></td><td>Local file search is mandatory before generation; Ninja MCP verifies the project</td></tr>
+        <tr><td><strong>Ignored BP warnings</strong></td><td>Risk</td><td><span class="resolved">✅ Mitigated</span></td><td><code>run_bp_check</code> is integrated into the validation loop after every generation step</td></tr>
+        <tr><td><strong>ISV context</strong></td><td>Risk</td><td><span class="partial">⚠ Partial</span></td><td>Ninja MCP indexes ISVs, but extension points may be limited depending on ISV package</td></tr>
+        <tr><td><strong>Solution/Projects</strong></td><td>Design</td><td><span class="resolved">✅ Decided</span></td><td>Developer creates .sln and .rnrproj manually — Ninja MCP only creates AOT objects inside existing projects</td></tr>
+        <tr><td><strong>Incremental generation</strong></td><td>Suggestion</td><td>—</td><td>Generating 1 object at a time makes debugging easier; Build Validation Loop confirms each step</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ STEP NAVIGATION ═══ -->
+<section style="padding: 3rem 2rem;">
+  <div class="container">
+    <div class="step-nav">
+      <a href="step-2-tdd.html">← Step 2: TDD Agent</a>
+      <a href="step-4-cr.html" class="next">Step 4 — Code Review →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div style="margin-bottom:1rem;">
+    <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+      <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0_s3f)"/>
+      <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1_s3f)"/>
+      <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2_s3f)"/>
+      <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3_s3f)"/>
+      <defs>
+        <linearGradient id="p0_s3f" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p1_s3f" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p2_s3f" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p3_s3f" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <strong>D365FO AI-Driven Delivery Framework</strong> — Step 3: X++ Agent<br>
+  <span style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; display:inline-block;">&copy; Avanade Inc. — The world's leading Microsoft expert</span>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

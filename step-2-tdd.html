@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 2 — TDD Agent · D365FO AI Framework — Avanade</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --bg-card: #FFFFFF;
+    --accent: #FF5800;
+    --accent-glow: rgba(255,88,0,0.08);
+    --agent-color: #0078D4;
+    --agent-glow: rgba(0,120,212,0.08);
+    --agent-border: rgba(0,120,212,0.3);
+    --green: #16a34a;
+    --red: #dc2626;
+    --text-primary: #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted: #999999;
+    --border: rgba(0,0,0,0.10);
+    --border-accent: rgba(0,120,212,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary); color: var(--text-primary);
+    line-height: 1.6; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 0;
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 40px, rgba(0,120,212,0.025) 40px, rgba(0,120,212,0.025) 41px),
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(0,120,212,0.025) 40px, rgba(0,120,212,0.025) 41px);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border); padding: 0 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  nav .inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; height: 60px;
+  }
+  nav .logo {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-weight: 800; font-size: 1rem; color: #FF5800; text-decoration: none;
+  }
+  nav .logo svg { height: 24px; width: auto; }
+  nav .logo .logo-text { font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); letter-spacing: 0.02em; }
+  nav .links { display: flex; gap: 1.2rem; align-items: center; }
+  nav .links a {
+    color: var(--text-secondary); text-decoration: none; font-size: 0.78rem;
+    font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; transition: color 0.2s;
+  }
+  nav .links a:hover { color: var(--agent-color); }
+  nav .links a.back-link {
+    background: var(--agent-glow); border: 1px solid var(--agent-border);
+    padding: 0.35rem 0.9rem; border-radius: 100px; color: var(--agent-color);
+    font-weight: 600; text-transform: none;
+  }
+  nav .links a.back-link:hover { background: var(--agent-color); color: #fff; }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown > a::after { content: ' ▾'; font-size: 0.6em; vertical-align: middle; }
+  .nav-dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.5rem 0; min-width: 220px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 200;
+  }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a {
+    display: flex !important; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 1.2rem !important; font-size: 0.78rem !important;
+    text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap;
+  }
+  .nav-dropdown-menu a:hover { background: var(--agent-glow); }
+  .nav-dropdown-menu .dd-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .nav-dropdown-menu a.active { font-weight: 700; color: var(--agent-color) !important; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; width: 100%; margin: 0 auto; }
+  section { padding: 5rem 2rem; position: relative; z-index: 1; }
+  .section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--agent-color); margin-bottom: 0.75rem; }
+  .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem; }
+  .section-sub { font-size: 1rem; color: var(--text-secondary); max-width: 700px; line-height: 1.7; margin-bottom: 2rem; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 8rem 2rem 4rem; text-align: center;
+    background: linear-gradient(160deg, rgba(0,120,212,0.05) 0%, transparent 40%), radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,120,212,0.06) 0%, transparent 70%);
+  }
+  .hero .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 1rem; border-radius: 100px;
+    background: var(--agent-glow); border: 1px solid var(--agent-border);
+    font-size: 0.75rem; font-weight: 600; color: var(--agent-color);
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.5rem;
+  }
+  .hero .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #FF9800; animation: pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(255,152,0,0.4); } 50% { opacity:0.8; box-shadow:0 0 0 6px rgba(255,152,0,0); } }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1.5rem; }
+  .hero h1 .gradient { background: linear-gradient(135deg, #0078D4 0%, #2196F3 50%, #64B5F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero .subtitle { font-size: 1.15rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto; font-weight: 400; line-height: 1.7; }
+  .hero .subtitle strong { color: var(--text-primary); font-weight: 600; }
+  .status-strip { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+  .status-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+  .status-item .si-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .status-item .si-dot.blue { background: var(--agent-color); }
+  .status-item .si-dot.orange { background: #FF5800; }
+
+  /* ── FLOWCHART ── */
+  .flowchart-section { background: var(--bg-secondary); }
+  .flowchart-wrap { width: 100%; overflow-x: auto; padding: 1rem 0; display: flex; justify-content: center; }
+  .flowchart-svg { max-width: 960px; width: 100%; height: auto; }
+  .flowchart-svg text { font-family: 'Inter', sans-serif; }
+
+  /* ── CARDS ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 2rem; }
+  .card { padding: 1.5rem; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); transition: all 0.3s; }
+  .card:hover { border-color: var(--border-accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,120,212,0.10); }
+  .card .card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-bottom: 1rem; font-weight: 700; background: var(--agent-glow); color: var(--agent-color); }
+  .card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+  .card ul { list-style: none; margin-top: 0.5rem; }
+  .card ul li { font-size: 0.8rem; color: var(--text-secondary); padding: 0.2rem 0; padding-left: 1rem; position: relative; }
+  .card ul li::before { content: '›'; position: absolute; left: 0; color: var(--agent-color); font-weight: 700; }
+  .card code { font-family: 'JetBrains Mono', monospace; font-size: 0.73rem; background: rgba(0,120,212,0.07); padding: 0.1rem 0.35rem; border-radius: 3px; color: #005A9E; }
+  .card.span-2 { grid-column: 1 / -1; }
+  .card-tag { display: inline-block; margin-top: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.65rem; font-weight: 600; background: var(--agent-glow); color: var(--agent-color); }
+
+  /* ── TABLES ── */
+  .detail-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); }
+  .detail-table th { padding: 0.75rem 1rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; background: var(--agent-glow); color: var(--agent-color); text-align: left; border-bottom: 1px solid var(--border); }
+  .detail-table td { padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); line-height: 1.5; vertical-align: top; }
+  .detail-table tr:last-child td { border-bottom: none; }
+  .detail-table tr:hover td { background: rgba(0,120,212,0.02); }
+  .detail-table code { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; background: rgba(0,120,212,0.07); padding: 0.1rem 0.35rem; border-radius: 3px; color: #005A9E; }
+  .detail-table .resolved { color: var(--green); font-weight: 600; }
+  .detail-table strong { color: var(--text-primary); }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #1E1E2E; border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0;
+    overflow-x: auto; border: 1px solid rgba(0,120,212,0.2);
+  }
+  .code-block pre { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.7; color: #CDD6F4; }
+  .code-block .kw { color: #89DCEB; }
+  .code-block .cm { color: #6C7086; font-style: italic; }
+  .code-block .str { color: #A6E3A1; }
+  .code-block .num { color: #FAB387; }
+  .code-block .hl { color: #F38BA8; }
+
+  /* ── EVIDENCE QUOTE ── */
+  .evidence-quote { background: #F0F4FF; border-left: 3px solid var(--agent-color); padding: 1.25rem 1.5rem; border-radius: 0 8px 8px 0; margin: 2rem 0; }
+  .evidence-quote p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; }
+  .evidence-quote code { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #005A9E; background: rgba(0,120,212,0.08); padding: 0.1rem 0.4rem; border-radius: 3px; }
+
+  /* ── PLAYBOOK CATEGORIES ── */
+  .playbook-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .pb-card { padding: 1.25rem; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--agent-color); transition: all 0.3s; }
+  .pb-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,120,212,0.10); }
+  .pb-card h5 { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--agent-color); }
+  .pb-card p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5; font-style: italic; }
+
+  /* ── STEP NAV ── */
+  .step-nav { display: flex; justify-content: space-between; align-items: center; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid var(--border); }
+  .step-nav a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; border: 1px solid var(--border); color: var(--text-secondary); }
+  .step-nav a:hover { border-color: var(--agent-border); color: var(--agent-color); }
+  .step-nav a.next { background: var(--agent-color); color: #fff; border-color: var(--agent-color); }
+  .step-nav a.next:hover { opacity: 0.9; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; position: relative; z-index: 1; background: linear-gradient(155deg, #F5F5F5 0%, #F5F5F5 50%, rgba(0,120,212,0.04) 50%); }
+  footer strong { color: var(--text-secondary); }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  @media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="inner">
+    <a href="presentation.html" class="logo">
+      <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M64.1487 27.819C63.7394 27.9328 63.2731 27.9891 62.7503 27.9891C61.4313 27.9891 60.7718 27.5126 60.7718 26.5595C60.7718 25.5613 61.4993 25.0618 62.955 25.0618C63.5459 25.0618 63.944 25.096 64.1487 25.1641V27.819ZM62.3078 19.6499C61.7392 19.6499 61.1875 19.7009 60.6535 19.803C60.1191 19.9052 59.6925 20.0472 59.3742 20.2285L59.545 21.8282C60.0225 21.6922 60.4487 21.5959 60.824 21.539C61.1993 21.4827 61.5799 21.4538 61.9668 21.4538C63.4219 21.4538 64.1498 22.0102 64.1498 23.1216V23.4961C63.8088 23.428 63.3312 23.3941 62.7174 23.3941C61.4434 23.3941 60.4371 23.6781 59.6984 24.2451C58.9592 24.8125 58.5898 25.5954 58.5898 26.5934C58.5898 28.6357 59.9885 29.6569 62.7854 29.6569C63.9222 29.6569 65.1052 29.4867 66.3329 29.1462V23.2918C66.3329 20.8642 64.9908 19.6499 62.3078 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M74.777 23.8028C74.777 22.9408 74.6117 22.3449 74.2823 22.0158C73.9524 21.6873 73.3667 21.5224 72.5257 21.5224C72.3209 21.5224 72.0764 21.5451 71.7922 21.5903C71.5076 21.6362 71.2407 21.6925 70.9905 21.7604V29.4189H68.7734V20.365C69.3414 20.1385 69.9897 19.9625 70.7177 19.8374C71.4452 19.713 72.1504 19.6504 72.8327 19.6504C75.6068 19.6504 76.994 20.8984 76.994 23.3943V29.4189H74.777V23.8028Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M84.2928 27.819C83.8835 27.9328 83.4171 27.9891 82.8943 27.9891C81.5751 27.9891 80.9161 27.5126 80.9161 26.5595C80.9161 25.5613 81.6434 25.0618 83.0991 25.0618C83.6899 25.0618 84.088 25.096 84.2928 25.1641V27.819ZM82.4524 19.6499C81.8837 19.6499 81.332 19.7009 80.798 19.803C80.2636 19.9052 79.837 20.0472 79.5188 20.2285L79.6895 21.8282C80.1671 21.6922 80.5933 21.5959 80.9686 21.539C81.3438 21.4827 81.7244 21.4538 82.1113 21.4538C83.5664 21.4538 84.2944 22.0102 84.2944 23.1216V23.4961C83.9533 23.428 83.4757 23.3941 82.8619 23.3941C81.5879 23.3941 80.5819 23.6781 79.8431 24.2451C79.1037 24.8125 78.7344 25.5954 78.7344 26.5934C78.7344 28.6357 80.133 29.6569 82.9299 29.6569C84.067 29.6569 85.2497 29.4867 86.4774 29.1462V23.2918C86.4774 20.8642 85.1354 19.6499 82.4524 19.6499Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M94.7312 27.6828C94.4806 27.7737 94.0261 27.819 93.3668 27.819C91.479 27.819 90.5357 26.7866 90.5357 24.7215C90.5357 23.678 90.7798 22.8723 91.2689 22.3049C91.7577 21.7379 92.4459 21.4539 93.3326 21.4539C93.8786 21.4539 94.3443 21.5336 94.7312 21.6922V27.6828ZM94.7321 16.2124V19.8543C94.3228 19.7183 93.7882 19.6502 93.1289 19.6502C91.6732 19.6502 90.4907 20.1212 89.5812 21.0627C88.6715 22.0044 88.2168 23.2358 88.2168 24.7558C88.2168 26.3442 88.6605 27.5585 89.5472 28.3977C90.4341 29.2373 91.7302 29.6569 93.4357 29.6569C94.5045 29.6569 95.6756 29.4868 96.9492 29.1465V16.2124H94.7321Z" fill="#FF5800"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M101.008 23.6663C101.077 22.9403 101.298 22.3729 101.673 21.9645C102.049 21.5561 102.531 21.3517 103.123 21.3517C103.714 21.3517 104.192 21.5561 104.556 21.9645C104.919 22.3729 105.101 22.9403 105.101 23.6663H101.008ZM107.25 24.1428C107.25 22.759 106.886 21.6638 106.159 20.8581C105.431 20.0531 104.441 19.6499 103.191 19.6499C101.827 19.6499 100.74 20.1041 99.9335 21.0114C99.126 21.9191 98.7227 23.1558 98.7227 24.7214C98.7227 26.2872 99.1544 27.5013 100.019 28.3635C100.883 29.2261 102.111 29.6569 103.703 29.6569C104.748 29.6569 105.738 29.4749 106.67 29.1122L106.431 27.4444C105.635 27.7166 104.782 27.8528 103.873 27.8528C102.008 27.8528 101.053 27.0136 101.008 25.3341H107.25V24.1428Z" fill="#FF5800"/>
+        <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0_s2n)"/>
+        <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1_s2n)"/>
+        <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2_s2n)"/>
+        <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3_s2n)"/>
+        <defs>
+          <linearGradient id="p0_s2n" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.8061" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p1_s2n" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p2_s2n" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+          <linearGradient id="p3_s2n" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">|&ensp;TDD Agent</span>
+    </a>
+    <div class="links">
+      <a href="#workflow">Workflow</a>
+      <a href="#ninja">Ninja MCP</a>
+      <a href="#schema">Exec Prompt</a>
+      <a href="#playbook">Playbook</a>
+      <a href="#attention">Attention</a>
+      <div class="nav-dropdown">
+        <a href="#">All Agents</a>
+        <div class="nav-dropdown-menu">
+          <a href="step-1-fdd.html"><span class="dd-dot" style="background:#FF5800;"></span>Step 1 — FDD Agent</a>
+          <a href="step-2-tdd.html" class="active"><span class="dd-dot" style="background:#0078D4;"></span>Step 2 — TDD Agent</a>
+          <a href="step-3-xpp.html"><span class="dd-dot" style="background:#107C10;"></span>Step 3 — X++ Agent</a>
+          <a href="step-4-cr.html"><span class="dd-dot" style="background:#5C2D91;"></span>Step 4 — Code Review</a>
+        </div>
+      </div>
+      <a href="presentation.html" class="back-link">← Overview</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="container">
+    <div class="badge reveal"><span class="dot"></span> Step 2 — Next to Implement</div>
+    <h1 class="reveal reveal-delay-1"><span class="gradient">TDD Generator</span><br>Agent</h1>
+    <p class="subtitle reveal reveal-delay-2">
+      Translates functional GAPs into a prescriptive <strong>Technical Design Document</strong>. Queries 584K+ AOT objects from Ninja MCP for evidence-based extension strategy decisions. Produces a structured <strong>Execution Prompt</strong> as an executable contract for the X++ Agent.
+    </p>
+    <div class="status-strip reveal reveal-delay-3">
+      <div class="status-item"><span class="si-dot blue"></span> Designed — Ready to implement</div>
+      <div class="status-item"><span class="si-dot orange"></span> Human-in-the-loop</div>
+      <div class="status-item"><span class="si-dot blue"></span> Developer</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WORKFLOW FLOWCHART ═══ -->
+<section id="workflow" class="flowchart-section">
+  <div class="container">
+    <div class="section-label reveal">Agent Workflow</div>
+    <h2 class="section-title reveal reveal-delay-1">From FDD to executable TDD</h2>
+    <p class="section-sub reveal reveal-delay-2">The agent reads the FDD, queries Ninja MCP for every design decision, and outputs two artefacts: TDD + Execution Prompt.</p>
+
+    <div class="flowchart-wrap reveal reveal-delay-3">
+      <svg class="flowchart-svg" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="960" height="540" rx="16" fill="#FAFAFA"/>
+
+        <!-- Step boxes with connectors, top to bottom -->
+        <!-- Row 1: Trigger + FDD download -->
+        <rect x="30" y="25" width="900" height="75" rx="10" fill="rgba(0,120,212,0.04)" stroke="rgba(0,120,212,0.15)" stroke-width="1"/>
+        <text x="50" y="46" fill="#0078D4" font-size="8" font-weight="700" letter-spacing="0.08em">TRIGGER</text>
+        <rect x="50" y="52" width="190" height="36" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.5"/>
+        <text x="145" y="74" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Developer triggers in VS Code</text>
+        <line x1="240" y1="70" x2="275" y2="70" stroke="#0078D4" stroke-width="1.5" marker-end="url(#arrB)"/>
+        <rect x="275" y="52" width="200" height="36" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.5"/>
+        <text x="375" y="70" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Identify WI + locate FDD</text>
+        <text x="375" y="82" text-anchor="middle" fill="#999" font-size="8">Azure DevOps MCP</text>
+        <line x1="475" y1="70" x2="510" y2="70" stroke="#0078D4" stroke-width="1.5" marker-end="url(#arrB)"/>
+        <rect x="510" y="52" width="200" height="36" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.5"/>
+        <text x="610" y="70" text-anchor="middle" fill="#1A1A1A" font-size="10" font-weight="600">Download + extract GAPs</text>
+        <text x="610" y="82" text-anchor="middle" fill="#999" font-size="8">From sibling DevOps task</text>
+
+        <!-- Row 2: Ninja MCP Analysis -->
+        <rect x="30" y="120" width="900" height="105" rx="10" fill="rgba(255,88,0,0.03)" stroke="rgba(255,88,0,0.15)" stroke-width="1"/>
+        <text x="50" y="141" fill="#FF5800" font-size="8" font-weight="700" letter-spacing="0.08em">NINJA MCP ANALYSIS — per GAP customisation</text>
+
+        <rect x="50" y="150" width="150" height="60" rx="8" fill="#FFF" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="125" y="168" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">search /</text>
+        <text x="125" y="181" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">batch_search</text>
+        <text x="125" y="196" text-anchor="middle" fill="#999" font-size="7.5">584K+ symbols</text>
+
+        <rect x="220" y="150" width="155" height="60" rx="8" fill="#FFF" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="297" y="168" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">analyze_extension</text>
+        <text x="297" y="181" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">_points</text>
+        <text x="297" y="196" text-anchor="middle" fill="#999" font-size="7.5">CoC methods &amp; delegates</text>
+
+        <rect x="395" y="150" width="162" height="60" rx="8" fill="#FFF" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="476" y="168" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">recommend_extension</text>
+        <text x="476" y="181" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">_strategy</text>
+        <text x="476" y="196" text-anchor="middle" fill="#999" font-size="7.5">CoC vs event handler</text>
+
+        <rect x="577" y="150" width="155" height="60" rx="8" fill="#FFF" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="654" y="168" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">find_coc_extensions /</text>
+        <text x="654" y="181" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">find_event_handlers</text>
+        <text x="654" y="196" text-anchor="middle" fill="#999" font-size="7.5">Existing wrappers</text>
+
+        <rect x="752" y="150" width="155" height="60" rx="8" fill="#FFF" stroke="#FF5800" stroke-width="1.5"/>
+        <text x="829" y="168" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">suggest_edt /</text>
+        <text x="829" y="181" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">get_table_info</text>
+        <text x="829" y="196" text-anchor="middle" fill="#999" font-size="7.5">Schema + EDT suggestions</text>
+
+        <!-- Divider arrow to clarification -->
+        <line x1="480" y1="100" x2="480" y2="120" stroke="#0078D4" stroke-width="1" stroke-dasharray="4 3"/>
+        <line x1="480" y1="225" x2="480" y2="250" stroke="#FF5800" stroke-width="1" stroke-dasharray="4 3"/>
+
+        <!-- Row 3: Manifesto + Clarification -->
+        <rect x="30" y="250" width="430" height="85" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+        <text x="50" y="272" fill="#555" font-size="8" font-weight="700" letter-spacing="0.08em">MANIFESTO / CONSTITUTION</text>
+        <rect x="50" y="280" width="190" height="40" rx="8" fill="#FFF" stroke="#888" stroke-width="1.2"/>
+        <text x="145" y="298" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Read local manifesto file</text>
+        <text x="145" y="311" text-anchor="middle" fill="#999" font-size="7.5">Prefix, naming, detail level, project rules</text>
+        <rect x="265" y="280" width="175" height="40" rx="8" fill="#FFF" stroke="#888" stroke-width="1.2"/>
+        <text x="352" y="298" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Apply to all TDD decisions</text>
+        <text x="352" y="311" text-anchor="middle" fill="#999" font-size="7.5">Signatures-only or full scaffold</text>
+
+        <rect x="490" y="250" width="440" height="85" rx="10" fill="rgba(0,120,212,0.03)" stroke="rgba(0,120,212,0.12)" stroke-width="1"/>
+        <text x="510" y="272" fill="#0078D4" font-size="8" font-weight="700" letter-spacing="0.08em">CLARIFICATION PROCESS</text>
+        <rect x="510" y="280" width="190" height="40" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.2"/>
+        <text x="605" y="298" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Ask developer (unclear points)</text>
+        <text x="605" y="311" text-anchor="middle" fill="#999" font-size="7.5">Interactive or DevOps comments</text>
+        <rect x="720" y="280" width="190" height="40" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.2"/>
+        <text x="815" y="298" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Loop until all points resolved</text>
+        <text x="815" y="311" text-anchor="middle" fill="#999" font-size="7.5">Cites Ninja MCP evidence</text>
+
+        <line x1="480" y1="335" x2="480" y2="365" stroke="#555" stroke-width="1" stroke-dasharray="4 3"/>
+
+        <!-- Row 4: Output -->
+        <rect x="30" y="365" width="900" height="140" rx="10" fill="rgba(22,163,74,0.03)" stroke="rgba(22,163,74,0.12)" stroke-width="1"/>
+        <text x="50" y="387" fill="#16a34a" font-size="8" font-weight="700" letter-spacing="0.08em">OUTPUT — DUAL ARTEFACTS</text>
+
+        <rect x="60" y="395" width="375" height="95" rx="8" fill="#FFF" stroke="#0078D4" stroke-width="1.5"/>
+        <text x="247" y="418" text-anchor="middle" fill="#0078D4" font-size="12" font-weight="700">TDD</text>
+        <text x="247" y="435" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Technical Design Document</text>
+        <text x="247" y="450" text-anchor="middle" fill="#555" font-size="8">Human-readable design for developer review</text>
+        <text x="247" y="464" text-anchor="middle" fill="#555" font-size="8">Attached to DevOps SubTask + review notification</text>
+        <text x="247" y="478" text-anchor="middle" fill="#555" font-size="8">Versioned: _rev_1, _rev_2 feed Lessons Learned</text>
+
+        <rect x="465" y="395" width="390" height="95" rx="8" fill="#FFF" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="660" y="416" text-anchor="middle" fill="#16a34a" font-size="11" font-weight="700">Execution Prompt</text>
+        <text x="660" y="433" text-anchor="middle" fill="#1A1A1A" font-size="9" font-weight="600">Structured Markdown contract for X++ Agent</text>
+        <text x="660" y="448" text-anchor="middle" fill="#555" font-size="8">AOT type · Action · Method signatures · Field specs</text>
+        <text x="660" y="463" text-anchor="middle" fill="#555" font-size="8">Extension points · Dependencies · Ninja evidence trail</text>
+        <text x="660" y="478" text-anchor="middle" fill="#555" font-size="8">Attached to DevOps — consumed by Step 3</text>
+
+        <defs>
+          <marker id="arrB" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#0078D4"/></marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NINJA MCP ═══ -->
+<section id="ninja">
+  <div class="container">
+    <div class="section-label reveal">Core Integration</div>
+    <h2 class="section-title reveal reveal-delay-1">Ninja MCP Server — Hybrid Mode</h2>
+    <p class="section-sub reveal reveal-delay-2">The TDD Agent has full visibility across all D365FO layers by combining Azure DB/Blob Storage (584K+ indexed objects) with local project file search.</p>
+
+    <div class="cards-grid reveal reveal-delay-3">
+      <div class="card">
+        <div class="card-icon">☁️</div>
+        <h4>Azure DB + Blob Storage</h4>
+        <p>All Microsoft standard code (584K+ indexed AOT objects), ISVs (DocCentric, etc.), and internal project assets. Remote — no dependency on the local machine.</p>
+        <span class="card-tag">Remote</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">💻</div>
+        <h4>Local File Search</h4>
+        <p>Project's custom model on the developer's machine. Captures recent changes not yet indexed. Takes priority over remote results for the same object.</p>
+        <span class="card-tag">Local — Priority</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h4>Nightly Sync</h4>
+        <p>The Azure DevOps build machine pulls the branch nightly, indexes objects, and updates Azure DB/Blob. Local file search covers the 1-day gap.</p>
+        <span class="card-tag">Build Machine</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏗️</div>
+        <h4>Result: Standard → ISV → Assets → Custom</h4>
+        <p>Full layered visibility from Microsoft base layer through ISV packages to the project's own model — all in a single MCP query context.</p>
+        <span class="card-tag">Full Stack</span>
+      </div>
+    </div>
+
+    <table class="detail-table reveal" style="margin-top:2.5rem;">
+      <thead><tr><th>Need</th><th>Ninja MCP Tool</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td>Which object to extend?</td><td><code>search</code> / <code>batch_search</code></td><td>Search across 584K+ symbols</td></tr>
+        <tr><td>What can be extended?</td><td><code>analyze_extension_points</code></td><td>CoC-eligible methods, delegates, events</td></tr>
+        <tr><td>CoC or event handler?</td><td><code>recommend_extension_strategy</code></td><td>Best extensibility mechanism</td></tr>
+        <tr><td>Does a CoC already exist?</td><td><code>find_coc_extensions</code></td><td>Existing wrappers on the target method</td></tr>
+        <tr><td>Does an event handler exist?</td><td><code>find_event_handlers</code></td><td>Handlers with classification</td></tr>
+        <tr><td>How do others implement this?</td><td><code>analyze_code_patterns</code> / <code>suggest_method_implementation</code></td><td>Real patterns from the codebase</td></tr>
+        <tr><td>Exact method signature?</td><td><code>get_method_signature</code> / <code>get_method_source</code></td><td>Signature + source code</td></tr>
+        <tr><td>Which EDT to use?</td><td><code>suggest_edt</code></td><td>Suggestions with confidence score</td></tr>
+        <tr><td>Fields and relations?</td><td><code>get_table_info</code></td><td>Schema: fields, indexes, FK</td></tr>
+        <tr><td>Best practices?</td><td><code>get_xpp_knowledge</code></td><td>D365FO knowledge base</td></tr>
+      </tbody>
+    </table>
+
+    <div class="evidence-quote reveal">
+      <p>"The agent cites evidence for every design decision. Example: <code>CoC on SalesTable.validateWrite()</code> — based on: <code>recommend_extension_strategy</code> + <code>analyze_extension_points</code> + <code>find_coc_extensions</code> with no existing wrapper found."</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ EXECUTION PROMPT SCHEMA ═══ -->
+<section id="schema" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label reveal">Contract Between Steps 2 &amp; 3</div>
+    <h2 class="section-title reveal reveal-delay-1">Execution Prompt Schema</h2>
+    <p class="section-sub reveal reveal-delay-2">Structured Markdown with one section per AOT object — the executable contract consumed by the X++ Agent. Objects are ordered following the 14-step compilation hierarchy from Step 3.</p>
+
+    <div class="code-block reveal reveal-delay-3">
+<pre><span class="kw"># Execution Prompt — X++ Agent</span>
+
+<span class="kw">## Context</span>
+- <span class="str">**WI**</span>: #{number} — {title}
+- <span class="str">**Primary model**</span>: {packageName}
+- <span class="str">**Project path**</span>: {path to .rnrproj}
+- <span class="str">**Manifesto**</span>: {manifesto version applied}
+- <span class="str">**FDD ref**</span>: {link or filename of the FDD}
+- <span class="str">**TDD ref**</span>: {link or filename of the TDD}
+
+<span class="kw">## Objects (in generation order)</span>
+
+<span class="kw">### [Order] [Type] — [Full name with prefix]</span>
+
+- <span class="str">**Action**</span>: create | extend
+- <span class="str">**AOT Type**</span>: table | class | form | enum | edt | data-entity | ...
+- <span class="str">**Base object**</span> <span class="cm">*(extensions only)*</span>: {standard/ISV object to extend}
+- <span class="str">**Dependencies in this prompt**</span>: {list of objects required first}
+
+<span class="kw">#### Specification</span>
+<span class="cm">--- For Classes (CoC / Event Handler / Batch / SysOperation) ---</span>
+- <span class="str">**Type**</span>: CoC | EventHandler | BatchJob | SysOperationService | Helper
+- <span class="str">**Target object**</span>: {class.method or table.method}
+- <span class="str">**Extension point**</span>: {CoC wrap | pre-event | post-event | delegate}
+- <span class="str">**Signature**</span>: {full method signature}
+- <span class="str">**Logic**</span>: {logic description or pseudo-code}
+
+<span class="kw">#### TDD Evidence</span>
+- <span class="hl">{Ninja MCP tool}</span> → {summarised result justifying the decision}</pre>
+    </div>
+
+    <div class="cards-grid reveal" style="margin-top:2rem;">
+      <div class="card">
+        <h4>14-Step Object Hierarchy</h4>
+        <p>Objects in the Execution Prompt are ordered following the D365FO compilation dependency order — Labels → Enums → EDTs → Tables → Classes → Forms → Reports → Security.</p>
+        <span class="card-tag">Step 3 Compatible</span>
+      </div>
+      <div class="card">
+        <h4>Dependency Tracking</h4>
+        <p>Each object lists its dependencies within the same prompt. The X++ Agent validates generation order before starting to avoid compilation failures.</p>
+        <span class="card-tag">Safe Generation</span>
+      </div>
+      <div class="card">
+        <h4>Evidence Trail</h4>
+        <p>Every design decision references the Ninja MCP tool and result that justified it. Full traceability from requirement to code decision.</p>
+        <span class="card-tag">Traceable</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLAYBOOK / LESSONS LEARNED ═══ -->
+<section id="playbook">
+  <div class="container">
+    <div class="section-label reveal">Continuous Learning</div>
+    <h2 class="section-title reveal reveal-delay-1">TDD Playbook &amp; Lessons Learned</h2>
+    <p class="section-sub reveal reveal-delay-2">The developer reviews the TDD and saves revisions with a versioned suffix. The agent compares originals vs. revisions, synthesises structured lessons, and creates a PR for the Tech Lead's approval.</p>
+
+    <div class="playbook-grid reveal reveal-delay-3">
+      <div class="pb-card">
+        <h5>Extensibility Decisions</h5>
+        <p>"Prefer event handler over CoC when the standard method is called in multiple contexts"</p>
+      </div>
+      <div class="pb-card">
+        <h5>Object Mapping</h5>
+        <p>"For credit validation, use the CustCreditLimit framework — do not create custom"</p>
+      </div>
+      <div class="pb-card">
+        <h5>Naming &amp; Patterns</h5>
+        <p>"In this project, use _Handler suffix for all event handler classes"</p>
+      </div>
+      <div class="pb-card">
+        <h5>Common Mistakes</h5>
+        <p>"Do not extend SalesConfirmJournalPost.postJournal — use the onPosted event instead"</p>
+      </div>
+    </div>
+
+    <div class="evidence-quote reveal" style="margin-top:2rem;">
+      <p>Lessons are updated on GitHub via Pull Request — the Tech Lead approves the merge. Once merged, the agent absorbs the lessons into all future TDD generations. Closed feedback loop.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ATTENTION POINTS ═══ -->
+<section id="attention" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label reveal">Risk Management</div>
+    <h2 class="section-title reveal reveal-delay-1">Attention Points — All Resolved</h2>
+
+    <table class="detail-table reveal reveal-delay-2">
+      <thead><tr><th>Point</th><th>Status</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Inconsistent detail level</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Manifesto controls detail level + Lessons Learned Loop + co-authoring mode</td></tr>
+        <tr><td><strong>Ninja MCP hybrid sync</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Local file search (priority) + nightly sync via build machine</td></tr>
+        <tr><td><strong>Mapping without mockups</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Manual mockups (current) + Clarification Process + automatic mockups via D365FO MCP (future)</td></tr>
+        <tr><td><strong>Decisions without evidence</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Ninja MCP provides structured evidence (54+ tools) — agent cites sources in every decision</td></tr>
+        <tr><td><strong>TDD as contract for Step 3</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Manifesto defines minimum detail level + Execution Prompt as executable contract</td></tr>
+        <tr><td><strong>FDD → TDD traceability</strong></td><td><span class="resolved">✅ Resolved</span></td><td>Document naming convention + native DevOps links via Azure DevOps MCP</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ STEP NAVIGATION ═══ -->
+<section style="padding: 3rem 2rem;">
+  <div class="container">
+    <div class="step-nav">
+      <a href="step-1-fdd.html">← Step 1: FDD Agent</a>
+      <a href="step-3-xpp.html" class="next">Step 3 — X++ Agent →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div style="margin-bottom:1rem;">
+    <svg viewBox="0 0 117 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M45.4224 27.819C45.0131 27.9328 44.5465 27.9891 44.024 27.9891C42.7047 27.9891 42.0455 27.5126 42.0455 26.5595C42.0455 25.5613 42.773 25.0618 44.2285 25.0618C44.8195 25.0618 45.2176 25.096 45.4224 25.1641V27.819ZM43.5803 19.6499C43.0117 19.6499 42.4599 19.7009 41.926 19.803C41.3913 19.9052 40.9649 20.0472 40.6467 20.2285L40.8172 21.8282C41.295 21.6922 41.7212 21.5959 42.0965 21.539C42.4716 21.4827 42.8523 21.4538 43.2392 21.4538C44.6943 21.4538 45.4223 22.0102 45.4223 23.1216V23.4961C45.0812 23.428 44.6035 23.3941 43.9898 23.3941C42.7158 23.3941 41.7096 23.6781 40.971 24.2451C40.2317 24.8125 39.8623 25.5954 39.8623 26.5934C39.8623 28.6357 41.261 29.6569 44.0579 29.6569C45.1947 29.6569 46.3774 29.4867 47.6053 29.1462V23.2918C47.6053 20.8642 46.2633 19.6499 43.5803 19.6499Z" fill="#FF5800"/>
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M48.5947 19.8882H51.0165L53.3703 27.2403L55.7579 19.8882H58.0775L54.4617 29.4186H52.2102L48.5947 19.8882Z" fill="#FF5800"/>
+      <path d="M16.2811 15.8119C15.5272 17.2558 14.9409 18.4277 14.4593 19.2856C13.9987 20.1436 13.559 20.8551 13.182 21.3992C12.7842 21.9433 12.3864 22.3827 11.9466 22.7176C11.5069 23.0524 10.9625 23.4291 10.2924 23.8476L9.91553 23.2826C10.3343 22.9687 10.7112 22.6548 11.0462 22.3618C11.3813 22.0688 11.7372 21.6294 12.1351 21.0853C12.5329 20.5412 12.9727 19.8297 13.4752 18.909C13.9777 18.0091 14.6059 16.7745 15.3597 15.2468C15.9041 14.1377 16.4067 13.217 16.8883 12.5055C17.3699 11.794 17.8306 11.229 18.2912 10.8314C18.7309 10.4129 19.1707 10.1408 19.5894 9.9734C20.0082 9.80599 20.427 9.74321 20.8667 9.76414C21.2855 9.78506 21.6834 9.8897 22.1022 10.078C22.5 10.2664 22.9607 10.643 23.4213 11.1871C23.9029 11.7312 24.4473 12.5264 25.0336 13.5518C25.6199 14.5772 26.3319 15.9374 27.1485 17.6115C27.672 18.6997 28.1745 19.5995 28.6352 20.332C29.0959 21.0644 29.5775 21.6503 30.08 22.1316C30.5825 22.6129 31.106 22.9896 31.6923 23.2826C32.2786 23.5755 32.9277 23.8267 33.6815 24.0568L34.1422 24.852C33.2418 24.7474 32.4252 24.58 31.7133 24.3289C31.0013 24.0778 30.3522 23.6802 29.745 23.157C29.1377 22.6339 28.5514 21.9642 27.9861 21.1481C27.4207 20.332 26.8344 19.2856 26.2272 18.051C25.4734 16.5443 24.8452 15.3306 24.3217 14.3889C23.7982 13.4472 23.3376 12.7148 22.9397 12.1916C22.5419 11.6684 22.165 11.3127 21.8509 11.1244C21.5368 10.936 21.2018 10.8314 20.8877 10.8314C20.5317 10.8105 20.1967 10.8942 19.8617 11.0406C19.5266 11.1871 19.1916 11.4592 18.8147 11.8568C18.4587 12.2544 18.0609 12.7566 17.663 13.4053C17.2024 14.0331 16.7627 14.8492 16.2811 15.8119Z" fill="url(#p0_s2f)"/>
+      <path d="M27.3581 25.3331C28.4679 25.375 29.5567 25.3122 30.6246 25.1657C31.6925 25.0192 32.6557 24.789 33.4724 24.4961L33.5771 25.082C32.0904 26.0237 29.9965 26.4632 27.3162 26.3585C26.1018 26.3167 25.0548 26.1702 24.1754 25.94C23.2959 25.7098 22.5212 25.4168 21.8302 25.082C21.3276 24.8518 20.8251 24.6007 20.3644 24.3496C19.9038 24.0985 19.4222 23.8683 18.9405 23.6381C18.4589 23.4079 17.9564 23.2405 17.4539 23.094C16.9513 22.9475 16.4069 22.8638 15.8415 22.8429C15.004 22.822 14.1455 22.8847 13.287 23.0312C12.4285 23.1777 11.5699 23.4288 10.7324 23.7427L10.3555 23.3033L11.0465 22.9685C11.7165 22.5709 12.4703 22.2779 13.3498 22.0686C14.2083 21.8594 15.0668 21.7756 15.8834 21.7966C16.5325 21.8175 17.1398 21.9012 17.6842 22.0477C18.2286 22.1942 18.7521 22.3825 19.2337 22.6127C19.7153 22.8429 20.2178 23.0731 20.6994 23.3451C21.181 23.6172 21.7045 23.8683 22.228 24.0985C22.919 24.4124 23.6309 24.6635 24.4057 24.8937C25.2223 25.1657 26.2065 25.2913 27.3581 25.3331Z" fill="url(#p1_s2f)"/>
+      <path d="M28.9493 17.3601C28.5514 17.3392 28.1955 17.4438 27.8395 17.6322C27.4835 17.8205 27.0857 18.1972 26.6041 18.7204C26.1434 19.2435 25.599 19.9759 24.9708 20.8967C24.3427 21.8175 23.5888 23.0103 22.6675 24.496C21.4321 26.505 20.2804 27.9489 19.2125 28.8278C18.1446 29.7067 17.0349 30.1462 15.8623 30.1043C14.6269 30.0624 13.4543 29.4347 12.3864 28.2628C11.2975 27.07 10.4809 25.4168 9.91553 23.3242L10.9415 23.5334C11.5069 25.2075 12.2398 26.5468 13.1192 27.5304C13.9987 28.5348 14.92 29.0371 15.9041 29.0789C16.8045 29.1208 17.7259 28.7232 18.6681 27.928C19.5894 27.1328 20.6155 25.8353 21.7462 24.0147C22.7513 22.4034 23.6098 21.085 24.3008 20.0806C24.9918 19.0761 25.599 18.2809 26.1015 17.7368C26.625 17.1718 27.1066 16.7951 27.5464 16.6068C27.9861 16.4185 28.4677 16.3348 28.9912 16.3557C30.1638 16.3975 31.2107 17.0881 32.1111 18.4483C33.0115 19.8085 33.8281 21.8802 34.5401 24.6634L33.4093 24.2031C32.7183 21.9012 32.0064 20.1852 31.2735 19.097C30.5407 17.9461 29.7659 17.3811 28.9493 17.3601Z" fill="url(#p2_s2f)"/>
+      <path d="M24.9714 33.0762C25.5158 33.0971 26.0602 32.9088 26.5837 32.5321C27.1281 32.1554 27.7982 31.423 28.6148 30.3348C29.243 29.5187 29.7665 28.8281 30.1853 28.284C30.6041 27.74 30.981 27.2587 31.3369 26.8611C31.6929 26.4425 32.0698 26.0449 32.4467 25.6683C32.8236 25.2916 33.3052 24.8312 33.8706 24.2871L34.5197 24.6429C33.9962 25.2288 33.5565 25.731 33.2215 26.1496C32.8655 26.5681 32.5305 26.9866 32.1745 27.4261C31.8395 27.8655 31.4626 28.3468 31.0438 28.8909C30.625 29.435 30.1015 30.1256 29.4733 30.9626C28.6148 32.1345 27.8401 32.9506 27.1491 33.4529C26.479 33.9342 25.7252 34.1644 24.9295 34.1434C24.4898 34.1225 24.092 34.0597 23.7569 33.9132C23.401 33.7877 23.0031 33.5366 22.5215 33.1599C22.0609 32.7832 21.5164 32.2601 20.8883 31.5695C20.2601 30.8789 19.4644 30 18.5012 28.8909C17.7683 28.0539 17.1192 27.3633 16.5329 26.7983C15.9466 26.2333 15.3603 25.7729 14.774 25.4381C14.1877 25.0823 13.5805 24.8103 12.9314 24.6219C12.2822 24.4336 11.5284 24.2871 10.6699 24.1825L10.9212 23.4082C11.8006 23.4919 12.5963 23.5965 13.2873 23.743C13.9783 23.8895 14.6274 24.1406 15.2556 24.4964C15.8628 24.8521 16.491 25.3125 17.1192 25.8775C17.7474 26.4635 18.4593 27.1959 19.2341 28.0957C20.1973 29.2048 20.972 30.0628 21.5793 30.7324C22.1865 31.3811 22.689 31.8834 23.0869 32.2391C23.4847 32.5949 23.8198 32.8251 24.1129 32.9297C24.3851 33.0134 24.6783 33.0762 24.9714 33.0762Z" fill="url(#p3_s2f)"/>
+      <defs>
+        <linearGradient id="p0_s2f" x1="14.3547" y1="28.9476" x2="32.1664" y2="16.6563" gradientUnits="userSpaceOnUse"><stop offset="0.2" stop-color="#FF5800"/><stop offset="0.3192" stop-color="#FFB414"/><stop offset="0.9" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p1_s2f" x1="10.3746" y1="26.3957" x2="33.5957" y2="26.3957" gradientUnits="userSpaceOnUse"><stop offset="0.09" stop-color="#FF5800"/><stop offset="0.3059" stop-color="#FFB414"/><stop offset="0.82" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p2_s2f" x1="5.94847" y1="27.3198" x2="24.573" y2="40.0004" gradientUnits="userSpaceOnUse"><stop offset="0.5" stop-color="#FF5800"/><stop offset="0.64" stop-color="#CE056A"/><stop offset="0.95" stop-color="#FF5800"/></linearGradient>
+        <linearGradient id="p3_s2f" x1="15.0882" y1="34.9422" x2="32.3785" y2="22.9589" gradientUnits="userSpaceOnUse"><stop stop-color="#FF5800"/><stop offset="0.259" stop-color="#C80000"/><stop offset="0.91" stop-color="#FF5800"/></linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <strong>D365FO AI-Driven Delivery Framework</strong> — Step 2: TDD Agent<br>
+  <span style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem; display:inline-block;">&copy; Avanade Inc. — The world's leading Microsoft expert</span>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
